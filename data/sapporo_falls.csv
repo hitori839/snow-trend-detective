@@ -1,0 +1,40 @@
+# Sapporo: ambulance transports after falls on snowy/icy roads, December-March of each fiscal year
+# Source: Sapporo City Fire Bureau data, as charted on tsurutsuru.jp (Winter Life Promotion Council), https://tsurutsuru.jp/toukei1.html (read 2026-11-14)
+# Cross-check with the Fire Bureau's own PDF (FY2023, r5kakutei.pdf): 1,887 Nov-Mar minus 139 in Nov = 1,748 (matches). FY2020 PDF gives 841 vs 836 here.
+# winter = January year (fiscal year + 1)
+winter,transports
+1991,415
+1992,375
+1993,710
+1994,676
+1995,582
+1996,756
+1997,665
+1998,600
+1999,768
+2000,780
+2001,916
+2002,827
+2003,850
+2004,815
+2005,1009
+2006,689
+2007,876
+2008,606
+2009,809
+2010,673
+2011,787
+2012,934
+2013,1317
+2014,993
+2015,1147
+2016,947
+2017,1225
+2018,1172
+2019,886
+2020,688
+2021,836
+2022,1290
+2023,1130
+2024,1748
+2025,1813

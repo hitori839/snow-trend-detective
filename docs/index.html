@@ -27,6 +27,7 @@
     <p class="ask" data-ja="北海道のパウダースノーは、重い雪に変わりつつあるのか？" data-en="Is Hokkaido's powder snow turning into heavy snow?"></p>
     <p class="q" data-ja="北海道の雪は、重くなる方向に動いている。" data-en="Hokkaido's snow is moving toward heavier snow."></p>
     <div class="facts" id="facts"></div>
+    <div class="field" id="field"></div>
     <p class="lead" data-ja="場所を選ぶと、1992〜2026年の冬（12〜3月）の「雪の質」の変化をカルテにします。NASA・JAXA・気象庁のデータがそろったときだけ「確か」と表示します。" data-en="Pick a place to see how its winter snow quality changed from 1992 to 2026 (Dec–Mar). We only say “certain” when NASA, JAXA and JMA data agree."></p>
   </section>
 
@@ -73,6 +74,15 @@
 
     <h2 data-ja="確かさのチェック" data-en="How sure are we?"></h2>
     <div class="card" id="trust"></div>
+  </section>
+
+  <section>
+    <h2 data-ja="なぜ大事？札幌の雪道での転倒" data-en="Why it matters: falls on Sapporo's winter roads"></h2>
+    <div class="card falls">
+      <div class="fallchart"><canvas id="fallChart"></canvas></div>
+      <ul id="fallText"></ul>
+      <p class="note" data-ja="出典：札幌市消防局のデータ（ウインターライフ推進協議会「冬みち転倒による救急搬送統計」・「冬みち転倒事故多発日」tsurutsuru.jp）。重い雪の日は気象庁札幌の観測。" data-en="Source: Sapporo City Fire Bureau data, via the Winter Life Promotion Council (tsurutsuru.jp). Heavy-snow days from JMA Sapporo."></p>
+    </div>
   </section>
 
   <section>

@@ -125,9 +125,72 @@ for p, b, ja, en, la, lo in STATIONS:
     ps = power_series(f)[1] if os.path.exists(f) else None
     stations.append({"id": b, "ja": ja, "en": en, "lat": la, "lon": lo, "series": s, "trend": trends(s),
                      "power": {"series": ps, "trend": trends(ps)} if ps else None})
+# Many cells are tested at once, so some "significant" cells could appear by chance.
+# 1) Benjamini-Hochberg false discovery rate: q-value per cell (q < 0.05 = still significant after correction)
+# 2) Field significance: how likely is it to see this many cells significant in the same direction by chance?
+#    Shuffle test: the order of winters is shuffled in the same way for every cell (keeps the spatial correlation
+#    between neighbouring cells), 500 times; p_field = share of shuffles with at least as many significant cells.
+def bh(ps):
+    idx = sorted(range(len(ps)), key=lambda i: ps[i]); m = len(ps); q = [None] * m; prev = 1.0
+    for r in range(m - 1, -1, -1):
+        i = idx[r]; prev = min(prev, ps[i] * m / (r + 1)); q[i] = round(prev, 4)
+    return q
+import random
+def field_test(key, n_perm=500, seed=1):
+    """share of shuffles (same winter order applied to every cell, which keeps the spatial correlation)
+    with at least as many cells significant (p<0.05) in the observed main direction"""
+    ser = [c["series"][key] for c in cells if c["trend"].get(key)]
+    obs = [mk(x) for x in ser]
+    up = sum(t["slope10"] > 0 and t["p"] < .05 for t in obs); dn = sum(t["slope10"] < 0 and t["p"] < .05 for t in obs)
+    sign = 1 if up >= dn else -1; n_obs = max(up, dn)
+    rnd = random.Random(seed); L = len(ser[0]); hit = 0
+    for _ in range(n_perm):
+        order = list(range(L)); rnd.shuffle(order)
+        cnt = 0
+        for x in ser:
+            t = mk([x[i] for i in order])
+            if t and t["p"] < .05 and t["slope10"] * sign > 0: cnt += 1
+        if cnt >= n_obs: hit += 1
+    return {"cells_sig": n_obs, "direction": "up" if sign > 0 else "down", "of": len(ser), "p_field": round((hit + 1) / (n_perm + 1), 4)}
+FIELD = {}
+for key in ("heavy", "powder", "icy", "share", "cov_apr", "cov_dec"):
+    tt = [c["trend"].get(key) for c in cells]
+    qs = bh([t["p"] for t in tt if t])
+    k = 0
+    for t in tt:
+        if t: t["q"] = qs[k]; k += 1
+    f = field_test(key)
+    f["cells_fdr"] = sum(1 for t in tt if t and t["q"] < .05 and (t["slope10"] > 0) == (f["direction"] == "up"))
+    FIELD[key] = f
+    print("field", key, f, flush=True)
+# Impact: Sapporo fall-injury ambulance transports (Dec-Mar) vs JMA Sapporo snow indicators.
+# Both rise over time (ageing population, more icy/heavy days), so we also correlate year-to-year CHANGES.
+def pearson(x, y):
+    mx, my = sum(x) / len(x), sum(y) / len(y)
+    sx = math.sqrt(sum((a - mx) ** 2 for a in x)); sy = math.sqrt(sum((b - my) ** 2 for b in y))
+    return sum((a - mx) * (b - my) for a, b in zip(x, y)) / (sx * sy)
+def perm_p(x, y, n=5000, seed=2):
+    r0 = abs(pearson(x, y)); rnd = random.Random(seed); y = list(y); hit = 0
+    for _ in range(n):
+        rnd.shuffle(y)
+        if abs(pearson(x, y)) >= r0: hit += 1
+    return (hit + 1) / (n + 1)
+FALLS = {}
+for line in open(os.path.join(ROOT, "data", "sapporo_falls.csv"), encoding="utf-8"):
+    if line[0].isdigit(): w, v = line.strip().split(","); FALLS[int(w)] = int(v)
+sap = next(s for s in stations if s["en"] == "Sapporo")
+falls = {"winters": sorted(FALLS), "transports": [FALLS[w] for w in sorted(FALLS)], "trend": mk([FALLS[w] for w in sorted(FALLS)]), "link": {}}
+for key in ("heavy", "icy"):
+    pairs = [(w, sap["series"][key][w - W0], FALLS[w]) for w in sorted(FALLS) if W0 <= w <= W1 and sap["series"][key][w - W0] is not None]
+    x = [a for _, a, _ in pairs]; y = [b for _, _, b in pairs]
+    dx = [x[i + 1] - x[i] for i in range(len(x) - 1)]; dy = [y[i + 1] - y[i] for i in range(len(y) - 1)]
+    falls["link"][key] = {"n": len(x), "r_raw": round(pearson(x, y), 2), "p_raw": round(perm_p(x, y), 3),
+                          "r_change": round(pearson(dx, dy), 2), "p_change": round(perm_p(dx, dy), 3)}
+print("falls", json.dumps(falls["link"]), falls["trend"])
 os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
 json.dump({"winters": list(range(W0, W1 + 1)), "cells": cells, "stations": stations,
            "hokkaido": {"series": modis("hokkaido", None), "trend": {k: mk(v) for k, v in modis("hokkaido", None).items()}},
+           "field": FIELD, "falls": falls,
            "modis_lut": json.load(open(os.path.join(ROOT, "data", "raw", "modis_lut.json"))),
            "meta": {"powder_t": -5, "heavy_t": -2, "season": "Dec-Mar"}}, open(os.path.join(ROOT, "docs", "data.json"), "w"), ensure_ascii=False, separators=(",", ":"))
 print("cells", len(cells), "stations", len(stations))

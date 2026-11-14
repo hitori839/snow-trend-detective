@@ -1,4 +1,5 @@
 "use strict";
+let fallChart = null;
 let satMap, satLayer, satMonth = "04", SATLUT = null;
 let LANG = "ja", D = null, map, map2, layer2, markers = [], places = [], chartRefs = [], tmYear = 2024, layerKey = "heavy";
 const T = (ja, en) => (LANG === "ja" ? ja : en);
@@ -23,7 +24,7 @@ function applyLang() {
   document.getElementById("lang").textContent = LANG === "ja" ? "EN" : "日本語";
   document.getElementById("quick").innerHTML = QUICK.map((q, i) => `<button class="chip" data-i="${i}">${T(q[0], q[1])}</button>`).join("");
   document.querySelectorAll("#quick .chip").forEach(b => (b.onclick = () => { const q = QUICK[+b.dataset.i]; choose(q[2], q[3], T(q[0], q[1])); }));
-  renderAbout(); renderFacts(); renderLayerChips(); drawMap2();
+  renderAbout(); renderFacts(); renderFalls(); renderLayerChips(); drawMap2();
   if (places.length) render();
 }
 
@@ -247,6 +248,12 @@ function renderFacts() {
     ["s", `${D.cells.filter(c => c.trend.cov_apr && c.trend.cov_apr.slope10 < 0).length}/${D.cells.filter(c => c.trend.cov_apr).length}`, T(`NASA衛星（MODIS）で「4月に残る雪」が減ったマス（うち${D.cells.filter(c => c.trend.cov_apr && c.trend.cov_apr.slope10 < 0 && c.trend.cov_apr.p < 0.05).length}は有意）。北海道全体で10年に${fmt(-D.hokkaido.trend.cov_apr.slope10, 0)}ポイント減`, `NASA cells where April snow cover fell, seen by the MODIS satellite (${D.cells.filter(c => c.trend.cov_apr && c.trend.cov_apr.slope10 < 0 && c.trend.cov_apr.p < 0.05).length} significant). All Hokkaido: −${fmt(-D.hokkaido.trend.cov_apr.slope10, 0)} points per decade`)],
     ["p", `${pUp}/${cp.length}`, T(`NASAのマスで「パウダーの日」が増えた数（有意に減ったマスは${pDown}）`, `NASA cells where powder days rose (${pDown} significant falls)`)],
   ].map(([c, b, t]) => `<div class="fact ${c}"><b>${b}</b><span>${t}</span></div>`).join("");
+  const F = D.field, mark = p => (p < 0.05 ? "✅" : p < 0.1 ? "🟡" : "⚪");
+  const row = (k, ja, en) => `<li>${mark(F[k].p_field)} ${T(ja, en)}：${T(`${F[k].of}マス中${F[k].cells_sig}マスが有意に${F[k].direction === "up" ? "増加" : "減少"}`, `${F[k].cells_sig} of ${F[k].of} cells significantly ${F[k].direction === "up" ? "up" : "down"}`)} → ${T("偶然の確率", "chance")} p=${fmt(F[k].p_field, 3)}${T(`（多重比較の補正後も${F[k].cells_fdr}マス）`, ` (${F[k].cells_fdr} cells survive FDR correction)`)}</li>`;
+  document.getElementById("field").innerHTML = `<details><summary>${T("🔍 偶然ではないの？（北海道全体での確かめ）", "🔍 Could this be chance? (Hokkaido-wide check)")}</summary>
+  <p class="note">${T("43マスも調べると、偶然に「有意」になるマスも出ます。そこで冬の順番を500回シャッフルし、同じくらい多くのマスが偶然そろう確率を計算しました（となりのマスどうしの似かたはそのまま）。", "With 43 cells, some can look significant by chance. We shuffled the order of winters 500 times (same shuffle for every cell, so neighbouring cells stay alike) and counted how often this many cells line up by chance.")}</p><ul>
+  ${row("cov_apr", "4月に残る雪（衛星）", "April snow cover (satellite)")}${row("heavy", "重い雪の日", "Heavy-snow days")}${row("icy", "つるつる路面の日", "Icy-road days")}${row("powder", "パウダーの日", "Powder days")}${row("cov_dec", "12月の雪（衛星）", "December snow cover (satellite)")}</ul>
+  <p class="note">${T("✅ 偶然の確率5%未満　🟡 10%未満　多重比較の補正：ベンジャミニ・ホッホベルグ法（FDR 5%）", "✅ chance < 5%  🟡 < 10%  Multiple-testing correction: Benjamini–Hochberg (FDR 5%)")}</p></details>`;
 }
 
 async function shareCard() {
@@ -270,6 +277,26 @@ async function shareCard() {
   const u = URL.createObjectURL(blob), l = document.createElement("a"); l.href = u; l.download = "snow-karte.png"; l.click(); setTimeout(() => URL.revokeObjectURL(u), 2000);
 }
 
+function renderFalls() {
+  const F = D.falls, sap = D.stations.find(s => s.en === "Sapporo"), last = F.transports.length - 1, lk = F.link.heavy;
+  const heavy = F.winters.map(w => { const i = D.winters.indexOf(w); return i < 0 ? null : sap.series.heavy[i]; });
+  if (fallChart) fallChart.destroy();
+  fallChart = new Chart(document.getElementById("fallChart"), { data: { labels: F.winters, datasets: [
+    { type: "bar", label: T("転倒による救急搬送（12〜3月、人）", "Fall-injury ambulance transports (Dec–Mar)"), data: F.transports, backgroundColor: css("--gray") + "88", yAxisID: "y" },
+    { type: "line", label: T("札幌の重い雪の日（日）", "Heavy-snow days in Sapporo"), data: heavy, borderColor: css("--heavy"), pointRadius: 0, borderWidth: 2, tension: .25, yAxisID: "y2" }] },
+    options: { animation: false, maintainAspectRatio: false, plugins: { legend: { labels: { boxWidth: 10, font: { size: 11 }, color: css("--muted") } } },
+      scales: { x: { ticks: { maxTicksLimit: 6, color: css("--muted") }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: css("--muted"), maxTicksLimit: 4 } },
+        y2: { position: "right", beginAtZero: true, grid: { display: false }, ticks: { color: css("--heavy"), maxTicksLimit: 4 } } } } });
+  document.getElementById("fallText").innerHTML = [
+    T(`札幌では、雪道で転んで救急車で運ばれた人が${F.winters[last]}年の冬（12〜3月）に<b>${F.transports[last].toLocaleString()}人</b>で、記録のある中で最多でした。35年で10年あたり約${fmt(F.trend.slope10, 0)}人のペースで増えています（高齢化も理由の一つと考えられます）。`,
+      `In Sapporo, <b>${F.transports[last].toLocaleString()} people</b> were taken to hospital by ambulance after falling on winter roads in winter ${F.winters[last]} (Dec–Mar), the most on record — up about ${fmt(F.trend.slope10, 0)} per decade over 35 years (an ageing population is likely one reason).`),
+    T("転倒が特に多かった日（35冬の上位6日、例：2014年12月21日は1日163人）の多くは、<b>水を多く含んだ湿った雪や雨が、そのあと凍った日</b>でした。これは、このアプリの「重い雪の日」と同じ条件です。",
+      "The worst days (top 6 in 35 winters, e.g. 163 people on 21 Dec 2014) mostly came when <b>wet, heavy snow or rain froze afterwards</b> — the same conditions as this app's “heavy-snow days”."),
+    T(`前の冬より重い雪の日が増えた冬は、搬送も増える傾向がありました（年ごとの増減の相関 r=${fmt(lk.r_change, 2)}、p=${fmt(lk.p_change, 3)}、${lk.n}冬）。ただし関係は強くなく、原因と言い切ることはできません。`,
+      `Winters with more heavy-snow days than the year before tended to have more transports (correlation of year-to-year changes r = ${fmt(lk.r_change, 2)}, p = ${fmt(lk.p_change, 3)}, ${lk.n} winters). The link is modest and does not prove cause.`),
+  ].map(x => `<li>${x}</li>`).join("");
+}
+
 function renderAbout() {
   document.getElementById("about").innerHTML = [
     T("期間：1992〜2026年の冬（前年12月〜3月、1月の年で表示）", "Period: winters 1992–2026 (Dec–Mar, labelled by January)"),
@@ -279,6 +306,8 @@ function renderAbout() {
     T("JAXA GSMaP 月別衛星降水（JAXA Earth API）：冬の降水量の傾向を確認", "JAXA GSMaP monthly satellite precipitation (JAXA Earth API): cross-check of winter precipitation"),
     T("気象庁 過去の気象データ：北海道10観測所の日別値（降雪・最深積雪・気温・風速）", "JMA historical data: daily values at 10 Hokkaido stations (snowfall, snow depth, temperature, wind)"),
     T("体感温度：気温と平均風速から風冷指数（カナダ気象局の式）で計算した目安", "Feels-like: wind-chill index (Environment Canada formula) from temperature and mean wind, as a rough guide"),
+    T("雪道の転倒による救急搬送：札幌市消防局のデータ（ウインターライフ推進協議会 tsurutsuru.jp）", "Fall-injury ambulance transports: Sapporo City Fire Bureau data (Winter Life Promotion Council, tsurutsuru.jp)"),
+    T("確かめ：多くのマスを同時に検定するため、ベンジャミニ・ホッホベルグ法（FDR）と、冬の順番をシャッフルする検定（500回）で偶然かどうかを確認", "Checks: many cells are tested at once, so we use Benjamini–Hochberg FDR and a 500-run shuffle test of winter order"),
     T("住所検索：国土地理院 / 地図：国土地理院タイル", "Address search and map tiles: Geospatial Information Authority of Japan"),
   ].map(x => `<li>${x}</li>`).join("");
 }
