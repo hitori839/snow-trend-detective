@@ -65,7 +65,7 @@ def winters(days):
             out["cold_t"].append(None); out["cold_wc"].append(None); out["cold_date"].append(None)
     return out
 
-TREND_KEYS = ("snow_days", "powder", "heavy", "share", "icy", "maxdepth", "cold_t", "cov_dec", "cov_apr")
+TREND_KEYS = ("snow_days", "powder", "heavy", "share", "icy", "maxdepth", "cold_t", "cov_dec", "cov_apr", "storm_wet", "storm_powder", "storm_all")
 
 JAXA = json.load(open(os.path.join(ROOT, "data", "raw", "jaxa_winter_precip.json")))
 # NASA MODIS monthly snow cover (%), from scripts/fetch_modis.py. December of the previous year and April of the winter year.
@@ -101,7 +101,31 @@ def jma_series(b):
         y, m = ym.split("-")
         for r in rows:
             days[f"{y}{m}{r['d']:02d}"] = {"tmean": r["tmean"], "tmax": r["tmax"], "tmin": r["tmin"], "snow": r["snowfall"], "wind": r["wind"], "depth": r["depth"]}
-    return winters(days)
+    s = winters(days); s["_days"] = days
+    return s
+
+# JAXA GSMaP daily precipitation at stations (scripts/fetch_jaxa_daily.py), 2001-2026.
+# Big-precipitation day = JAXA >= 10 mm/day (water). With the JMA daily mean temperature:
+#   storm_wet    big day with mean > -2 C  (wet, heavy snowstorm or rain)
+#   storm_powder big day with mean <= -5 C (big powder snowfall)
+JD_PATH = os.path.join(ROOT, "data", "raw", "jaxa_daily.json")
+JD = json.load(open(JD_PATH)) if os.path.exists(JD_PATH) else {}
+def jaxa_storms(b, days):
+    pr = JD.get(str(b)); out = {"storm_wet": [], "storm_powder": [], "storm_all": []}
+    for w in range(W0, W1 + 1):
+        if pr is None or w < 2001:
+            for k in out: out[k].append(None)
+            continue
+        keys = [k for k in days if (k[:4] == str(w - 1) and k[4:6] == "12") or (k[:4] == str(w) and k[4:6] in ("01", "02", "03"))]
+        have = [k for k in keys if pr.get(k) is not None and days[k].get("tmean") is not None]
+        if len(have) < 100:
+            for k in out: out[k].append(None)
+            continue
+        big = [k for k in have if pr[k] >= 10]
+        out["storm_all"].append(len(big))
+        out["storm_wet"].append(sum(days[k]["tmean"] > -2 for k in big))
+        out["storm_powder"].append(sum(days[k]["tmean"] <= -5 for k in big))
+    return out
 
 def trends(s): return {k: mk(s[k]) for k in TREND_KEYS if k in s and any(v is not None for v in s[k])}
 
@@ -121,6 +145,7 @@ for p, b, ja, en, la, lo in STATIONS:
     s = jma_series(b)
     if s is None: continue
     s.update(modis("stations", str(b)))
+    s.update(jaxa_storms(b, s.pop("_days")))
     f = os.path.join(ROOT, "data", "raw", "power", f"{la:.3f}_{lo:.3f}.json")
     ps = power_series(f)[1] if os.path.exists(f) else None
     stations.append({"id": b, "ja": ja, "en": en, "lat": la, "lon": lo, "series": s, "trend": trends(s),
@@ -200,4 +225,4 @@ for k in ("cov_dec", "cov_apr"):
     print(k, "cells down", sum(t["slope10"] < 0 for t in tt), "sig down", sum(t["slope10"] < 0 and t["p"] < .05 for t in tt), "sig up", sum(t["slope10"] > 0 and t["p"] < .05 for t in tt), "of", len(tt))
 for st in stations:
     t = st["trend"]; pt = (st["power"] or {}).get("trend", {})
-    print(st["en"], {k: (t[k]["slope10"], t[k]["p"]) for k in ("powder", "heavy", "share", "icy", "maxdepth", "cov_apr") if t.get(k)}, "| POWER", {k: (pt[k]["slope10"], pt[k]["p"]) for k in ("powder", "heavy", "share", "icy") if pt.get(k)})
+    print(st["en"], {k: (t[k]["slope10"], t[k]["p"]) for k in ("powder", "heavy", "share", "icy", "maxdepth", "cov_apr", "storm_wet", "storm_powder", "storm_all") if t.get(k)}, "| POWER", {k: (pt[k]["slope10"], pt[k]["p"]) for k in ("powder", "heavy", "share", "icy") if pt.get(k)})

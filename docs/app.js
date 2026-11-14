@@ -9,6 +9,7 @@ const KEYS = {
   heavy: { icon: "💧", ja: "重い雪の日", en: "Heavy-snow days", sub_ja: "雪の日のうち、日平均気温 −2℃より暖かい（水分が多い雪）", sub_en: "Snow days with daily mean > −2 °C (wet, heavy snow)", ko: "무거운 눈의 날", sub_ko: "눈 온 날 중 일평균 기온 −2℃보다 따뜻함 (물기 많은 눈)", unit_ko: "일", unit: "日", unit_en: "days", color: "--heavy" },
   icy: { icon: "🧊", ja: "つるつる路面の日", en: "Icy-road days", sub_ja: "最高気温0℃超・最低気温0℃未満（昼に溶けて夜に凍る）", sub_en: "Max > 0 °C and min < 0 °C (melts by day, refreezes at night)", ko: "빙판길 날", sub_ko: "최고 기온 0℃ 초과·최저 기온 0℃ 미만 (낮에 녹고 밤에 얼어요)", unit_ko: "일", unit: "日", unit_en: "days", color: "--icy" },
   spring: { icon: "🛰️", ja: "4月に残る雪（衛星）", en: "April snow cover (satellite)", sub_ja: "NASA MODIS衛星で見た、4月に雪でおおわれた土地の割合（2001〜2026年）", sub_en: "Share of land under snow in April, seen by NASA's MODIS satellite (2001–2026)", ko: "4월에 남는 눈 (위성)", sub_ko: "NASA MODIS 위성으로 본, 4월에 눈으로 덮인 땅의 비율 (2001~2026년)", unit_ko: "%", unit: "%", unit_en: "%", color: "--blue", sat: "cov_apr" },
+  storm: { icon: "💥", ja: "重い大雪・大雨の日（JAXA衛星）", en: "Wet heavy-storm days (JAXA satellite)", ko: "무거운 폭설·폭우 날 (JAXA 위성)", sub_ja: "JAXA衛星の降水が1日10mm以上で、日平均気温が−2℃より暖かい日（2001〜2026年、最寄りの観測所）", sub_en: "Days with ≥ 10 mm of JAXA satellite precipitation and a daily mean warmer than −2 °C (2001–2026, nearest station)", sub_ko: "JAXA 위성 강수가 하루 10mm 이상이고 일평균 기온이 −2℃보다 따뜻한 날 (2001~2026년, 가장 가까운 관측소)", unit: "日", unit_en: "days", unit_ko: "일", color: "--heavy", sat: "storm_wet", stOnly: true },
   share: { icon: "📊", ja: "雪のうちパウダーの割合", en: "Share of powder", sub_ja: "雪の日全体に占めるパウダーの日の割合", sub_en: "Powder days as a share of all snow days", ko: "눈 중 파우더 비율", sub_ko: "눈 온 날 전체 중 파우더의 날 비율", unit_ko: "%", unit: "%", unit_en: "%", color: "--powder" },
 };
 const QUICK = [["札幌", "Sapporo", 43.06, 141.33, "삿포로"], ["ニセコ（倶知安）", "Niseko (Kutchan)", 42.90, 140.76, "니세코 (굿찬)"], ["旭川", "Asahikawa", 43.76, 142.37, "아사히카와"], ["函館", "Hakodate", 41.82, 140.75, "하코다테"], ["釧路", "Kushiro", 42.98, 144.38, "구시로"], ["網走", "Abashiri", 44.02, 144.28, "아바시리"]];
@@ -60,16 +61,24 @@ function verdict(g, n) {
 }
 
 function satCardHTML(k, p, idx) {
-  const K = KEYS[k], near = p.dist <= 40, src = near ? p.st : p.cell, ser = src.series[K.sat], tr = src.trend[K.sat];
-  const v = ser.filter(x => x != null), a = mean(v.slice(0, 10)), b = mean(ser.slice(-10));
+  const K = KEYS[k], near = K.stOnly || p.dist <= 40, src = near ? p.st : p.cell, ser = src.series[K.sat], tr = src.trend[K.sat];
+  const v = ser.filter(x => x != null), a = mean(v.slice(0, 10)), b = mean(ser.slice(-10)), u = K.stOnly ? T(K.unit, K.unit_en, K.unit_ko) : "%";
   const cls = tr && tr.p < 0.05 ? "ok" : tr && tr.p < 0.1 ? "mid" : "no";
-  const txt = tr && tr.p < 0.05 ? T("✅ 確か：衛星の26年分で有意", "✅ Certain: significant over 26 years of satellite data", "✅ 확실: 위성 26년 자료에서 유의") : tr && tr.p < 0.1 ? T("🟡 傾向あり（p<0.1）", "🟡 Likely (p < 0.1)", "🟡 경향 있음 (p < 0.1)") : T("⚪ まだ言えない", "⚪ Not yet clear", "⚪ 아직 말할 수 없음");
+  const txt = tr && tr.p < 0.05 ? T("✅ 確か：衛星の26年分で有意", "✅ Certain: significant over 26 years of satellite data", "✅ 확실: 위성 26년 자료에서 유의") : K.stOnly && b > a ? T("🟡 増える方向（まだ有意でない）", "🟡 Rising, not yet significant", "🟡 늘어나는 방향 (아직 유의하지 않음)") : tr && tr.p < 0.1 ? T("🟡 傾向あり（p<0.1）", "🟡 Likely (p < 0.1)", "🟡 경향 있음 (p < 0.1)") : T("⚪ まだ言えない", "⚪ Not yet clear", "⚪ 아직 말할 수 없음");
   const arrow = tr ? (tr.slope10 > 0 ? "↑" : tr.slope10 < 0 ? "↓" : "→") : "";
+  const pTxt = tr ? " · p=" + fmt(tr.p, 2) : "";
+  const foot = K.stOnly
+    ? T(`気象庁${p.st.ja}（${fmt(p.dist, 0)}km）の気温 × JAXA衛星の降水`, `JMA ${p.st.en} (${fmt(p.dist, 0)} km) temperature × JAXA satellite rain`, `기상청 ${STKO[p.st.en] || p.st.en}(${fmt(p.dist, 0)}km) 기온 × JAXA 위성 강수`) + pTxt + " · " + T(`10観測所中${stormUp()}か所で増加`, `rising at ${stormUp()} of 10 stations`, `관측소 10곳 중 ${stormUp()}곳에서 증가`)
+    : (near ? T(`${p.st.ja}のまわり約20km四方`, `~20 km box around ${p.st.en}`, `${STKO[p.st.en] || p.st.en} 주변 약 20km 사방`) : T(`約50kmのマス（北緯${p.cell.lat}° 東経${p.cell.lon}°）`, `~50 km cell ${p.cell.lat}°N ${p.cell.lon}°E`, `약 50km 칸 (북위 ${p.cell.lat}° 동경 ${p.cell.lon}°)`)) + pTxt + ` · ${T("北海道全体", "All Hokkaido", "홋카이도 전체")} ${fmt(D.hokkaido.trend.cov_apr.slope10)}${T("ポイント/10年", " pts/decade", "%p/10년")} (p=${fmt(D.hokkaido.trend.cov_apr.p, 3)})`;
   return `<div class="card kc"><h3>${K.icon} ${T(K.ja, K.en, K.ko)}</h3><div class="sub">${T(K.sub_ja, K.sub_en, K.sub_ko)}</div>
-  <div class="nums"><span>${T("2000年代", "2000s", "2000년대")} <b class="big">${fmt(a, 0)}</b>%</span><span>→ ${T("2020年代", "2020s", "2020년대")} <b class="big">${fmt(b, 0)}</b>%</span>
-  <span class="arrow">${arrow} ${tr ? fmt(tr.slope10) : "–"}${T("ポイント", " pts", "%p")}/${T("10年", "decade", "10년")}</span></div>
+  <div class="nums"><span>${T("2000年代", "2000s", "2000년대")} <b class="big">${fmt(a, K.stOnly ? 1 : 0)}</b>${u}</span><span>→ ${T("2020年代", "2020s", "2020년대")} <b class="big">${fmt(b, K.stOnly ? 1 : 0)}</b>${u}</span>
+  <span class="arrow">${arrow} ${tr ? fmt(tr.slope10) : "–"}${K.stOnly ? u : T("ポイント", " pts", "%p")}/${T("10年", "decade", "10년")}</span></div>
   <canvas id="c${idx}"></canvas><span class="badge ${cls}">${txt}</span>
-  <div class="cmpline">${near ? T(`${p.st.ja}のまわり約20km四方`, `~20 km box around ${p.st.en}`, `${STKO[p.st.en] || p.st.en} 주변 약 20km 사방`) : T(`約50kmのマス（北緯${p.cell.lat}° 東経${p.cell.lon}°）`, `~50 km cell ${p.cell.lat}°N ${p.cell.lon}°E`, `약 50km 칸 (북위 ${p.cell.lat}° 동경 ${p.cell.lon}°)`)}${tr ? " · p=" + fmt(tr.p, 2) : ""} · ${T("北海道全体", "All Hokkaido", "홋카이도 전체")} ${fmt(D.hokkaido.trend.cov_apr.slope10)}${T("ポイント/10年", " pts/decade", "%p/10년")} (p=${fmt(D.hokkaido.trend.cov_apr.p, 3)})</div></div>`;
+  <div class="cmpline">${foot}</div></div>`;
+}
+function stormUp() {
+  const i0 = D.winters.indexOf(2001);
+  return D.stations.filter(s => { const a = s.series.storm_wet.slice(i0); return mean(a.slice(-10)) > mean(a.slice(0, 10)); }).length;
 }
 
 function cardHTML(k, p, idx) {
@@ -91,13 +100,14 @@ function cardHTML(k, p, idx) {
 function drawChart(id, p, k, p2) {
   const near = p.dist <= 40, yrs = D.winters;
   if (KEYS[k].sat) {
-    const sk = KEYS[k].sat, i0 = D.winters.indexOf(2001), src = q => (q.dist <= 40 ? q.st : q.cell).series[sk].slice(i0);
-    const ds = [{ label: T("NASA MODIS衛星", "NASA MODIS satellite", "NASA MODIS 위성"), data: src(p), borderColor: css(KEYS[k].color), pointRadius: 2, borderWidth: 2, tension: .25 },
+    const sk = KEYS[k].sat, so = KEYS[k].stOnly, i0 = D.winters.indexOf(2001), src = q => ((so || q.dist <= 40) ? q.st : q.cell).series[sk].slice(i0);
+    const ds = so ? [{ label: T("JAXA衛星×気象庁", "JAXA satellite × JMA", "JAXA 위성 × 기상청"), data: src(p), borderColor: css(KEYS[k].color), pointRadius: 2, borderWidth: 2, tension: .25 }]
+      : [{ label: T("NASA MODIS衛星", "NASA MODIS satellite", "NASA MODIS 위성"), data: src(p), borderColor: css(KEYS[k].color), pointRadius: 2, borderWidth: 2, tension: .25 },
       { label: T("北海道全体", "All Hokkaido", "홋카이도 전체"), data: D.hokkaido.series[sk].slice(i0), borderColor: css("--gray"), borderDash: [4, 3], pointRadius: 0, borderWidth: 1.5, tension: .25 }];
     if (p2) ds.push({ label: p2.label, data: src(p2), borderColor: css("--heavy"), pointRadius: 0, borderWidth: 2, tension: .25 });
     chartRefs.push(new Chart(document.getElementById(id), { type: "line", data: { labels: yrs.slice(i0), datasets: ds },
       options: { animation: false, maintainAspectRatio: false, spanGaps: true, plugins: { legend: { display: true, labels: { boxWidth: 10, font: { size: 11 }, color: css("--muted") } } },
-        scales: { x: { ticks: { maxTicksLimit: 6, color: css("--muted") }, grid: { display: false } }, y: { min: 0, max: 100, ticks: { color: css("--muted"), maxTicksLimit: 3 } } } } }));
+        scales: { x: { ticks: { maxTicksLimit: 6, color: css("--muted") }, grid: { display: false } }, y: { min: 0, max: so ? undefined : 100, ticks: { color: css("--muted"), maxTicksLimit: 3 } } } } }));
     return;
   }
   const ds = [{ label: near ? T("地上（気象庁）", "Ground (JMA)", "지상 (기상청)") : "NASA", data: (near ? p.st.series[k] : p.cell.series[k]), borderColor: css(KEYS[k].color), backgroundColor: "transparent", pointRadius: 0, borderWidth: 2, tension: .25 },
@@ -191,6 +201,7 @@ function trustHTML(p) {
   <li>${T("NASA POWER（MERRA-2再解析）：", "NASA POWER (MERRA-2 reanalysis): ", "NASA POWER (MERRA-2 재분석): ")}${T(`約50kmのマス（北緯${p.cell.lat}°・東経${p.cell.lon}°）の日別データ`, `daily data for the ~50 km cell at ${p.cell.lat}°N ${p.cell.lon}°E`, `약 50km 칸(북위 ${p.cell.lat}°·동경 ${p.cell.lon}°)의 일별 자료`)}</li>
   <li>${T("気象庁の地上観測：", "JMA ground observations: ", "기상청 지상 관측: ")}${T(`${p.st.ja}（${fmt(p.dist, 0)}km）の日別の降雪・気温・積雪`, `daily snowfall, temperature and snow depth at ${p.st.en} (${fmt(p.dist, 0)} km)`, `${STKO[p.st.en] || p.st.en}(${fmt(p.dist, 0)}km)의 일별 강설·기온·적설`)}</li>
   <li>${T("JAXA GSMaP（衛星降水）：", "JAXA GSMaP (satellite precipitation): ", "JAXA GSMaP (위성 강수): ")}${T("冬の降水量の傾き（2001〜2026年）", "winter precipitation trend (2001–2026)", "겨울 강수량의 기울기 (2001~2026년)")} — NASA ${n ? fmt(n.slope10) : "–"}mm / JAXA ${j ? fmt(j.slope10) : "–"}mm ${T("（10年あたり）", "per decade", "(10년당)")} → ${agree ? T("✅ 同じ方向", "✅ same direction", "✅ 같은 방향") : T("⚪ 方向が違う／不明", "⚪ differ / unclear", "⚪ 방향이 다름 / 불분명")}</li>
+  <li>${T("JAXA GSMaP（毎日の衛星降水）：", "JAXA GSMaP (daily satellite rain): ", "JAXA GSMaP (매일의 위성 강수): ")}${T(`1日10mm以上の「重い大雪・大雨の日」は、10観測所中${stormUp()}か所で2000年代より2020年代に増加`, `wet heavy-storm days (≥ 10 mm/day) rose from the 2000s to the 2020s at ${stormUp()} of 10 stations`, `하루 10mm 이상의 「무거운 폭설·폭우 날」은 관측소 10곳 중 ${stormUp()}곳에서 2000년대보다 2020년대에 증가`)}</li>
   <li>${T("検定：季節を絞った冬ごとの値にマン・ケンドール検定（p<0.05で有意）とセン傾き。", "Test: Mann–Kendall on one value per winter (significant at p < 0.05) with Sen's slope.", "검정: 겨울마다 값 하나씩으로 맨-켄달 검정(p<0.05면 유의)과 센 기울기.")}</li></ul>`;
 }
 
@@ -198,7 +209,7 @@ function render() {
   chartRefs.forEach(c => c.destroy()); chartRefs = [];
   const [p, p2] = places;
   document.getElementById("places").innerHTML = places.map((q, i) => `<div class="card place ${i ? "b" : ""}"><h3>${q.label}</h3><p>${T(`最寄りの地上観測：気象庁${q.st.ja}（${fmt(q.dist, 0)}km）・NASAのマス：北緯${q.cell.lat}° 東経${q.cell.lon}°`, `Nearest ground station: JMA ${q.st.en} (${fmt(q.dist, 0)} km) · NASA cell ${q.cell.lat}°N ${q.cell.lon}°E`, `가장 가까운 지상 관측소: 기상청 ${STKO[q.st.en] || q.st.en} (${fmt(q.dist, 0)}km) · NASA 칸: 북위 ${q.cell.lat}° 동경 ${q.cell.lon}°`)}</p></div>`).join("");
-  const keys = ["powder", "heavy", "icy", "share", "spring"];
+  const keys = ["powder", "heavy", "icy", "share", "spring", "storm"];
   document.getElementById("cards").innerHTML = keys.map((k, i) => cardHTML(k, p, i)).join("");
   keys.forEach((k, i) => drawChart("c" + i, p, k, p2));
   document.getElementById("tmYear").textContent = tmYear;
@@ -395,6 +406,7 @@ function renderAbout() {
     T("雪質の目安：雪の日（気象庁は降雪1cm以上、NASAは降雪1mm（水換算）以上）の日平均気温が−5℃以下ならパウダー、−2℃より暖かければ重い雪", "Snow quality rule of thumb: on a snow day (JMA ≥ 1 cm snowfall, NASA ≥ 1 mm water equivalent), daily mean ≤ −5 °C = powder, > −2 °C = heavy", "눈 품질 기준: 눈 온 날(기상청 강설 1cm 이상, NASA 강설 1mm(물 환산) 이상)의 일평균 기온이 −5℃ 이하면 파우더, −2℃보다 따뜻하면 무거운 눈"),
     T("NASA POWER 日別データ（MERRA-2）：気温・降雪・降水・風", "NASA POWER daily (MERRA-2): temperature, snowfall, precipitation, wind", "NASA POWER 일별 자료 (MERRA-2): 기온·강설·강수·바람"),
     T("NASA MODIS（Terra）月平均の雪のおおわれ方（NASA GIBS地図タイルを公式カラーマップで％に戻して集計）：12月・2月・4月、2001〜2026年", "NASA MODIS (Terra) monthly snow cover (NASA GIBS tiles turned back into % with the official colour map): Dec, Feb, Apr, 2001–2026", "NASA MODIS (Terra) 월평균 눈 덮임 (NASA GIBS 지도 타일을 공식 색표로 %로 되돌려 집계): 12월·2월·4월, 2001~2026년"),
+    T("JAXA GSMaP 日別衛星降水（JAXA Earth API、2001〜2026年、10観測所の地点）：1日10mm以上の日を気象庁の気温で「重い大雪・大雨」「パウダーの大雪」に分類", "JAXA GSMaP daily satellite precipitation (JAXA Earth API, 2001–2026, at 10 stations): days ≥ 10 mm split by JMA temperature into wet heavy storms and big powder days", "JAXA GSMaP 일별 위성 강수 (JAXA Earth API, 2001~2026년, 관측소 10곳 지점): 하루 10mm 이상인 날을 기상청 기온으로 「무거운 폭설·폭우」와 「파우더 대설」로 분류"),
     T("JAXA GSMaP 月別衛星降水（JAXA Earth API）：冬の降水量の傾向を確認", "JAXA GSMaP monthly satellite precipitation (JAXA Earth API): cross-check of winter precipitation", "JAXA GSMaP 월별 위성 강수 (JAXA Earth API): 겨울 강수량 경향 교차 확인"),
     T("気象庁 過去の気象データ：北海道10観測所の日別値（降雪・最深積雪・気温・風速）", "JMA historical data: daily values at 10 Hokkaido stations (snowfall, snow depth, temperature, wind)", "기상청 과거 기상 자료: 홋카이도 10개 관측소 일별 값 (강설·최심적설·기온·풍속)"),
     T("体感温度：気温と平均風速から風冷指数（カナダ気象局の式）で計算した目安", "Feels-like: wind-chill index (Environment Canada formula) from temperature and mean wind, as a rough guide", "체감 온도: 기온과 평균 풍속으로 계산한 풍랭 지수 (캐나다 기상청 식), 대략적인 기준"),
