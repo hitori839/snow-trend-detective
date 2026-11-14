@@ -23,6 +23,7 @@
     <a class="brand" href="#/"><img src="assets/logo.svg" alt="" class="logo"><span>Snow Trend Detective</span></a>
     <div class="navlinks mono">
       <a href="#/" data-v="home" data-ja="ホーム" data-en="Home" data-ko="홈"></a>
+      <a href="#/hokkaido" data-v="hokkaido" data-ja="紹介・結果" data-en="About & findings" data-ko="소개·결과"></a>
       <a href="#/karte" data-v="karte" data-ja="雪質カルテ" data-en="Snow chart" data-ko="눈 품질 카르테"></a>
       <a href="#/time" data-v="time" data-ja="雪の年表" data-en="Snow timeline" data-ko="눈의 연표"></a>
       <a href="#/why" data-v="why" data-ja="なぜ・どこで" data-en="Why & where" data-ko="왜·어디서"></a>
@@ -42,7 +43,7 @@
       <p class="lead" id="sideLead"></p>
       <div class="cta">
         <a class="btn-o" href="#/" data-go="pick"><span data-ja="自分の街を調べる" data-en="Check my town" data-ko="우리 동네 보기"></span> →</a>
-        <a class="link" href="#/" data-go="method" data-ja="データと方法" data-en="Data and method" data-ko="데이터와 방법"></a>
+        <a class="link" href="#/hokkaido" data-ja="データと方法" data-en="Data and method" data-ko="데이터와 방법"></a>
       </div>
     </div>
     <ul class="hud-modes">
@@ -70,48 +71,6 @@
   <main>
     <!-- ============ HOME ============ -->
     <div class="view" data-view="home">
-      <section class="intro">
-        <p data-html-ja="雪の質は、降るときの気温で決まります。<b>−5℃以下ならさらさらの軽い雪</b>、<b>−2℃より暖かければ水を多く含んだ重い雪</b>。わたしたちは北海道の35回の冬を一日ずつ数え、その割合がどう変わったかを調べました。" data-html-en="Snow quality is set by the temperature it falls in. <b>At −5 °C or colder it is light, dry snow</b>; <b>warmer than −2 °C it is wet, heavy snow</b>. We counted every snow day of 35 Hokkaido winters to see how that mix has changed." data-html-ko="눈의 품질은 내릴 때의 기온으로 정해집니다. <b>−5℃ 이하면 보송보송한 가벼운 눈</b>, <b>−2℃보다 따뜻하면 물기 많은 무거운 눈</b>. 홋카이도의 35번 겨울을 하루씩 세어, 그 비율이 어떻게 바뀌었는지 조사했습니다."></p>
-        <p data-html-ja="場所を選ぶと、<b>あなたの街</b>の雪質カルテ・2050年の見通し・あの冬の積雪を、それぞれのページで見られます。" data-html-en="Pick a place to open <b>your town's</b> snow chart, a 2050 preview and a winter time machine, each on its own page." data-html-ko="장소를 고르면 <b>우리 동네</b>의 눈 품질 카르테, 2050년 전망, 그 겨울에 쌓인 눈을 각각의 페이지에서 볼 수 있습니다."></p>
-      </section>
-
-      <section class="split">
-        <div>
-          <p class="lbl mono" data-ja="住む人へ" data-en="For residents" data-ko="사는 사람에게"></p>
-          <ul class="dots">
-            <li data-ja="自分の街の雪質の35年" data-en="35 years of your town's snow quality" data-ko="우리 동네 눈 품질 35년"></li>
-            <li data-ja="この先7日の雪質と転倒注意日" data-en="Next 7 days: snow quality and fall-risk days" data-ko="앞으로 7일 눈 품질과 낙상 주의 날"></li>
-            <li data-ja="冬のタイムマシン（積雪・体感温度・衛星写真）" data-en="Winter time machine (snow depth, feels-like, satellite)" data-ko="겨울 타임머신 (적설·체감 온도·위성 사진)"></li>
-          </ul>
-        </div>
-        <div>
-          <p class="lbl mono" data-ja="まち・スキー場へ" data-en="For cities & ski areas" data-ko="도시·스키장에"></p>
-          <ul class="dots">
-            <li data-ja="北海道43マスの傾向地図" data-en="Trend map of 43 Hokkaido cells" data-ko="홋카이도 43칸 추세 지도"></li>
-            <li data-ja="雪道の転倒と重い雪の関係" data-en="Falls on icy roads vs heavy snow" data-ko="눈길 낙상과 무거운 눈의 관계"></li>
-            <li data-ja="統計の確かさをそのまま表示" data-en="Statistical confidence shown as is" data-ko="통계적 확실성을 그대로 표시"></li>
-          </ul>
-        </div>
-      </section>
-
-      <div class="trust-row mono">
-        <span class="lbl" data-ja="データ" data-en="Data from" data-ko="데이터"></span>
-        <span>NASA POWER</span><span>NASA MODIS</span><span>JAXA GSMaP</span><span>JMA</span>
-      </div>
-
-      <section>
-        <p class="lbl mono" data-ja="根拠" data-en="The evidence" data-ko="근거"></p>
-        <div class="box ev">
-          <div class="ev-text">
-            <h2 data-ja="重い雪は増え、春の雪は早く消えている。" data-en="More heavy snow, and spring snow vanishing sooner." data-ko="무거운 눈은 늘고, 봄 눈은 빨리 사라지고 있다."></h2>
-            <p data-ja="雪の量（雪の日の数）はほとんど変わっていません。変わったのは質です。地上の観測所、NASAの再解析、NASAとJAXAの衛星という別々の目が、同じ方向を指しています。軽い雪の日は減る傾向ですが、まだ「確か」とは言えません。" data-en="The amount of snow (number of snow days) has barely changed — its quality has. Ground stations, NASA reanalysis, and NASA and JAXA satellites — separate eyes — point the same way. Light-snow days lean down, but that is not yet certain." data-ko="눈의 양(눈 온 날 수)은 거의 변하지 않았습니다. 바뀐 건 질입니다. 지상 관측소, NASA 재분석, NASA와 JAXA 위성이라는 서로 다른 눈이 같은 방향을 가리킵니다. 가벼운 눈의 날은 줄어드는 경향이지만 아직 「확실」하다고는 말할 수 없습니다."></p>
-            <div class="cause" id="why"></div>
-            <div class="field" id="field"></div>
-          </div>
-          <div class="stats" id="facts"></div>
-        </div>
-      </section>
-
       <section id="pick">
         <p class="lbl mono" data-ja="場所をえらぶ" data-en="Pick a place" data-ko="장소 고르기"></p>
         <div class="box">
@@ -140,9 +99,80 @@
         </div>
       </section>
 
+      <section id="actSec">
+        <p class="lbl mono" data-ja="今週の備え · 屋根の雪の重さ予報" data-en="This week's plan · roof snow-load forecast" data-ko="이번 주 대비 · 지붕 눈 무게 예보"></p>
+        <div class="box" id="act"></div>
+      </section>
+
       <section>
         <p class="lbl mono" data-ja="あなたの街をもっと見る" data-en="Explore your town" data-ko="우리 동네 더 보기"></p>
         <div class="entries" id="entries"></div>
+      </section>
+
+    </div>
+
+    <!-- ============ HOKKAIDO RESULTS (fixed findings) ============ -->
+    <div class="view" data-view="hokkaido" hidden>
+      <section class="about-top">
+        <p class="lbl mono" data-ja="この作品について" data-en="About this project" data-ko="이 작품에 대해"></p>
+        <div class="about-grid">
+          <div class="box">
+            <h2 data-ja="なぜ作ったか" data-en="Why we made it" data-ko="왜 만들었나"></h2>
+            <p data-ja="2024年の冬、札幌を旅行して、軽くて冷たい雪と、体の芯まで冷える寒さを体験しました。この雪は、これからも続くのか。好きなものを、自分でデータで確かめたいと思ったのが始まりです。" data-en="In winter 2024 I travelled to Sapporo and met its light, cold snow. Will that snow last? I wanted to check something I love with real data — that was the start." data-ko="2024년 겨울 삿포로를 여행하며 가볍고 차가운 눈과 뼛속까지 시린 추위를 경험했습니다. 이 눈은 앞으로도 계속될까. 좋아하는 것을 직접 데이터로 확인하고 싶었던 것이 시작입니다."></p>
+            <p data-ja="雪の「量」ではなく「質」に注目しました。軽い雪は観光の宝、湿った重い雪は屋根・電線・道路の負担になり、溶けて凍れば転倒の原因になります。" data-en="We look at snow quality, not just amount. Light snow is a tourism treasure; wet, heavy snow loads roofs, power lines and roads, and when it refreezes, people fall." data-ko="눈의 「양」이 아니라 「질」에 주목했습니다. 가벼운 눈은 관광의 보물이고, 젖은 무거운 눈은 지붕·전선·도로에 부담을 주며, 녹았다 얼면 낙상의 원인이 됩니다."></p>
+          </div>
+          <div class="box">
+            <h2 data-ja="使い方" data-en="How to use it" data-ko="사용법"></h2>
+            <ol class="steps">
+              <li data-ja="ホームの地球儀をクリック、または地名を検索（日本語・英語・韓国語、世界中OK）" data-en="Click the globe on Home, or search any place in any language" data-ko="홈 지구본을 클릭하거나 지명을 검색 (일본어·영어·한국어, 세계 어디든)"></li>
+              <li data-ja="その場所の答え・雪の断面・この先7日と今週の備え（屋根の雪の重さ、転倒注意）を見る" data-en="See that place's answer, snowpack profile, the next 7 days and this week's plan (roof load, fall risk)" data-ko="그 장소의 답·눈 단면·앞으로 7일과 이번 주 대비(지붕 눈 무게, 낙상 주의)를 본다"></li>
+              <li data-ja="「雪質カルテ」で35年の変化と「だから何をするか」" data-en="“Snow chart”: 35 years of change and what to do" data-ko="「눈 품질 카르테」에서 35년 변화와 「그래서 무엇을 할지」"></li>
+              <li data-ja="「雪の年表」で1992年から明日、10年後まで（地図つき）" data-en="“Snow timeline”: from 1992 to tomorrow and 10 years ahead, with a map" data-ko="「눈의 연표」에서 1992년부터 내일, 10년 후까지 (지도 포함)"></li>
+              <li data-ja="「なぜ・どこで」で原因と、これから増えること・減ること" data-en="“Why & where”: causes, and what becomes more or less common" data-ko="「왜·어디서」에서 원인과 앞으로 늘고 줄어드는 것"></li>
+            </ol>
+          </div>
+        </div>
+      </section>
+      <section class="intro">
+        <p data-html-ja="雪の質は、降るときの気温で決まります。<b>−5℃以下ならさらさらの軽い雪</b>、<b>−2℃より暖かければ水を多く含んだ重い雪</b>。わたしたちは北海道の35回の冬を一日ずつ数え、その割合がどう変わったかを調べました。" data-html-en="Snow quality is set by the temperature it falls in. <b>At −5 °C or colder it is light, dry snow</b>; <b>warmer than −2 °C it is wet, heavy snow</b>. We counted every snow day of 35 Hokkaido winters to see how that mix has changed." data-html-ko="눈의 품질은 내릴 때의 기온으로 정해집니다. <b>−5℃ 이하면 보송보송한 가벼운 눈</b>, <b>−2℃보다 따뜻하면 물기 많은 무거운 눈</b>. 홋카이도의 35번 겨울을 하루씩 세어, 그 비율이 어떻게 바뀌었는지 조사했습니다."></p>
+        <p data-html-ja="ホームで場所を選ぶと、<b>その場所</b>の雪質カルテ・この先7日と1〜10年後・原因と影響を見られます。このページは、北海道全体で確かめた結果です。" data-html-en="Pick a place on the home page to see <b>that place's</b> snow chart, the next 7 days and 1–10 years ahead, causes and impacts. This page shows what we confirmed across Hokkaido." data-html-ko="홈에서 장소를 고르면 <b>그 장소</b>의 눈 품질 카르테, 앞으로 7일과 1~10년 후, 원인과 영향을 볼 수 있습니다. 이 페이지는 홋카이도 전체에서 확인한 결과입니다."></p>
+      </section>
+
+      <section class="split">
+        <div>
+          <p class="lbl mono" data-ja="住む人へ" data-en="For residents" data-ko="사는 사람에게"></p>
+          <ul class="dots">
+            <li data-ja="自分の街の雪質の35年" data-en="35 years of your town's snow quality" data-ko="우리 동네 눈 품질 35년"></li>
+            <li data-ja="この先7日の雪質と転倒注意日" data-en="Next 7 days: snow quality and fall-risk days" data-ko="앞으로 7일 눈 품질과 낙상 주의 날"></li>
+            <li data-ja="雪の年表（1992年〜10年後、積雪・衛星写真・地図）" data-en="Snow timeline (1992 to +10 years: depth, satellite, map)" data-ko="눈의 연표 (1992~10년 후: 적설·위성 사진·지도)"></li>
+          </ul>
+        </div>
+        <div>
+          <p class="lbl mono" data-ja="まち・スキー場へ" data-en="For cities & ski areas" data-ko="도시·스키장에"></p>
+          <ul class="dots">
+            <li data-ja="北海道43マスの傾向地図" data-en="Trend map of 43 Hokkaido cells" data-ko="홋카이도 43칸 추세 지도"></li>
+            <li data-ja="雪道の転倒と重い雪の関係" data-en="Falls on icy roads vs heavy snow" data-ko="눈길 낙상과 무거운 눈의 관계"></li>
+            <li data-ja="統計の確かさをそのまま表示" data-en="Statistical confidence shown as is" data-ko="통계적 확실성을 그대로 표시"></li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="trust-row mono">
+        <span class="lbl" data-ja="データ" data-en="Data from" data-ko="데이터"></span>
+        <span>NASA POWER</span><span>NASA MODIS</span><span>JAXA GSMaP</span><span>JMA</span>
+      </div>
+
+      <section>
+        <p class="lbl mono" data-ja="北海道全体の結果（いつも同じ）" data-en="Hokkaido-wide findings (fixed)" data-ko="홋카이도 전체 결과 (항상 같음)"></p>
+        <div class="box ev">
+          <div class="ev-text">
+            <h2 data-ja="重い雪は増え、春の雪は早く消えている。" data-en="More heavy snow, and spring snow vanishing sooner." data-ko="무거운 눈은 늘고, 봄 눈은 빨리 사라지고 있다."></h2>
+            <p data-ja="雪の量（雪の日の数）はほとんど変わっていません。変わったのは質です。地上の観測所、NASAの再解析、NASAとJAXAの衛星という別々の目が、同じ方向を指しています。軽い雪の日は減る傾向ですが、まだ「確か」とは言えません。" data-en="The amount of snow (number of snow days) has barely changed — its quality has. Ground stations, NASA reanalysis, and NASA and JAXA satellites — separate eyes — point the same way. Light-snow days lean down, but that is not yet certain." data-ko="눈의 양(눈 온 날 수)은 거의 변하지 않았습니다. 바뀐 건 질입니다. 지상 관측소, NASA 재분석, NASA와 JAXA 위성이라는 서로 다른 눈이 같은 방향을 가리킵니다. 가벼운 눈의 날은 줄어드는 경향이지만 아직 「확실」하다고는 말할 수 없습니다."></p>
+            <div class="cause" id="why"></div>
+            <div class="field" id="field"></div>
+          </div>
+          <div class="stats" id="facts"></div>
+        </div>
       </section>
 
       <section>

@@ -16,6 +16,8 @@ const SIDE = {
     ["気温と水分で原因を分け、変わりやすい場所を北海道と世界で探します。わからないことも、そのまま書きます。", "We split the cause into warming and moisture, and look for the places most likely to change, in Hokkaido and worldwide. What we cannot say, we say too.", "기온과 수분으로 원인을 나누고, 바뀌기 쉬운 곳을 홋카이도와 세계에서 찾습니다. 모르는 것도 그대로 적습니다."]],
 };
 let VIEW = "home";
+SIDE.hokkaido = [["紹介・結果", "About & findings", "소개·결과"], ["北海道の雪は、重く湿り、春は早く消えている。", "Hokkaido's snow is getting wetter and heavier, and leaving earlier in spring.", "홋카이도의 눈은 무겁고 젖어 가고, 봄에는 빨리 사라지고 있다."],
+  ["35回の冬、10観測所と43マス、4つのデータで確かめた北海道全体の結果、転倒との関係、市向けの地図とデータ。", "35 winters, 10 stations and 43 cells, four data sources: the Hokkaido-wide findings, the link with falls, and maps and data for the city.", "35번의 겨울, 관측소 10곳과 43칸, 4가지 데이터로 확인한 홋카이도 전체 결과, 낙상과의 관계, 시청용 지도와 데이터."]];
 const STKO = { Sapporo: "삿포로", Asahikawa: "아사히카와", Obihiro: "오비히로", Kushiro: "구시로", Hakodate: "하코다테", Wakkanai: "왓카나이", Abashiri: "아바시리", Muroran: "무로란", "Kutchan (Niseko)": "굿찬 (니세코)", Iwamizawa: "이와미자와" };
 const KEYS = {
   powder: { icon: "❄️", ja: "軽い雪の日", en: "Light-snow days", sub_ja: "雪の日のうち、日平均気温 −5℃以下（軽く乾いた雪）", sub_en: "Snow days with daily mean ≤ −5 °C (light, dry snow)", ko: "가벼운 눈의 날", sub_ko: "눈 온 날 중 일평균 기온 −5℃ 이하 (가볍고 마른 눈)", unit_ko: "일", unit: "日", unit_en: " days", color: "--powder" },
@@ -279,7 +281,7 @@ function route() {
   if (!places.length) return;
   render();
   [map, map2, satMap].forEach(m => m && m.invalidateSize());
-  if (VIEW === "home") renderFalls();
+  if (VIEW === "hokkaido") { renderFalls(); setTimeout(() => map2 && map2.invalidateSize(), 60); }
   if (VIEW === "why") renderWhy();
   const go = route.go; route.go = null;
   if (go) setTimeout(() => document.getElementById(go).scrollIntoView({ behavior: "smooth", block: "start" }), 30);
@@ -844,8 +846,52 @@ function fcClass(d, i) {
   if (!out.length) out.push(["none", "·", sn > 0 ? T("雪わずか", "Light snow", "눈 조금") : T("雪なし", "No snow", "눈 없음")]);
   return out;
 }
+
+// ---------- this week's plan: roof snow-load forecast + action calendar ----------
+// new-snow density from air temperature (Hedstrom & Pomeroy 1998): rho = 67.92 + 51.25 exp(T/2.59) kg/m3, capped at 250
+const snowRho = t => Math.min(250, 67.92 + 51.25 * Math.exp(t / 2.59));
+function roofPlan() {
+  if (!FC || FC.error || !FC.time) return null;
+  let cum = 0; const days = [];
+  FC.time.forEach((t, i) => {
+    const tm = FC.temperature_2m_mean[i], sn = FC.snowfall_sum[i] || 0, rn = FC.rain_sum[i] || 0;
+    const add = (sn / 100) * snowRho(tm), light = (sn / 100) * snowRho(-8);           // same depth if it fell as light snow at -8 C
+    const rainOn = cum > 5 && rn > 0 ? rn : 0;                                          // rain soaking into snow already on the roof (1 mm = 1 kg/m2)
+    cum += add + rainOn;
+    days.push({ t, i, sn, rn, tm, add, light, rainOn, cum, cls: fcClass(FC, i).map(x => x[0]) });
+  });
+  const acts = [];
+  const wd = d => { const x = new Date(d.t + "T00:00:00"); return `${x.getMonth() + 1}/${x.getDate()}`; };
+  days.forEach((d, k) => {
+    const prev = k > 0 ? days[k - 1] : null, when = prev ? T(`${wd(prev)}（前日）`, `${wd(prev)} (day before)`, `${wd(prev)} (전날)`) : T("今日", "today", "오늘");
+    if (d.cls.includes("warn")) acts.push([when, "⚠️", T(`${wd(d)}は湿った雪・雨のあとに凍る見込み。砂まき・滑り止めの靴を用意し、高齢の方の玄関前の雪かきを手伝いましょう。`, `${wd(d)}: wet snow or rain likely to freeze. Put out grit, use anti-slip shoes, and help older neighbours clear their doorsteps.`, `${wd(d)}: 젖은 눈·비 뒤 결빙 예상. 모래를 뿌리고 미끄럼 방지 신발을 준비하고, 고령자 집 앞 눈 치우기를 도와주세요.`)]);
+    if (d.cls.includes("heavy") && d.sn >= 3) acts.push([wd(d), "🌲", T(`${wd(d)}は重い雪 ${fmt(d.sn, 0)}cm。電線や木に雪がつきやすいので、倒木・停電に注意。`, `${wd(d)}: ${fmt(d.sn, 0)} cm of heavy snow — wet snow sticks to lines and trees; watch for fallen trees and power cuts.`, `${wd(d)}: 무거운 눈 ${fmt(d.sn, 0)}cm. 전선·나무에 눈이 붙기 쉬워 나무 쓰러짐·정전 주의.`)]);
+    if (d.add + d.rainOn >= 15) acts.push([wd(d), "🏠", T(`${wd(d)}は屋根に約${fmt(d.add + d.rainOn, 0)}kg/m²増える見込み。降ったあと、明るいうちに2人以上で雪下ろしを。`, `${wd(d)}: about ${fmt(d.add + d.rainOn, 0)} kg/m² more on the roof. Clear it after the snow, in daylight, never alone.`, `${wd(d)}: 지붕에 약 ${fmt(d.add + d.rainOn, 0)}kg/m² 늘어날 전망. 눈이 그친 뒤 밝을 때, 2명 이상이 지붕 눈 치우기를.`)]);
+  });
+  return { days, acts, cum, lightCum: days.reduce((a, d) => a + d.light, 0) };
+}
+function actHTMLWeek() {
+  const P = roofPlan();
+  if (!P) return `<p class="note">${T("予報を読みこみ中…", "Loading forecast…", "예보 불러오는 중…")}</p>`;
+  const mx = Math.max(20, ...P.days.map(d => d.cum));
+  const bars = P.days.map(d => { const x = new Date(d.t + "T00:00:00"), hgt = (d.cum / mx) * 100, ad = ((d.add + d.rainOn) / mx) * 100;
+    return `<div class="rb"><div class="rbar"><i style="height:${hgt - ad}%"></i><b style="height:${ad}%"></b></div><span class="mono">${fmt(d.cum, 0)}</span><small>${x.getMonth() + 1}/${x.getDate()}</small></div>`; }).join("");
+  const heavier = P.cum > 0.5 && P.lightCum > 0 ? Math.round(100 * (P.cum - P.lightCum) / P.lightCum) : null;
+  return `<h2>${P.cum >= 1 ? T(`この1週間で、屋根の雪は約${fmt(P.cum, 0)}kg/m²増える見込み。`, `About ${fmt(P.cum, 0)} kg/m² of snow may build up on roofs this week.`, `이번 주 지붕 눈은 약 ${fmt(P.cum, 0)}kg/m² 늘어날 전망.`) : T("この1週間、屋根に積もる雪はほとんどない見込み。", "Little snow is expected to build up on roofs this week.", "이번 주 지붕에 쌓일 눈은 거의 없을 전망.")}</h2>
+    <div class="roofrow">${bars}</div>
+    <p class="note">${T("棒＝その日までにたまる新しい雪の重さ（kg/m²、溶ける分は入れない多めの見積もり）。濃い部分＝その日に増える分。", "Bars = new snow building up on a roof (kg/m², ignoring melt, so an upper estimate). Bright part = that day's addition.", "막대 = 그날까지 쌓이는 새 눈의 무게 (kg/m², 녹는 양은 빼지 않은 넉넉한 추정). 밝은 부분 = 그날 늘어나는 양.")}
+      ${heavier != null && heavier > 5 ? T(`同じ深さが −8℃の軽い雪だった場合より <b>${heavier}%重い</b>。`, ` The same depth as −8 °C light snow would weigh <b>${heavier}% less</b>.`, ` 같은 깊이가 −8℃의 가벼운 눈이었다면 <b>${heavier}% 가벼웠을</b> 것.`) : ""}</p>
+    <p class="lbl mono" style="margin-top:14px">${T("今週の備えカレンダー", "This week's plan", "이번 주 대비 달력")}</p>
+    ${P.acts.length ? `<ul class="acts">${P.acts.map(([w, i, t]) => `<li><span class="aw mono">${w}</span><span class="ai">${i}</span><span>${t}</span></li>`).join("")}</ul>` : `<p>${T("今週は特別な備えは必要なさそうです。", "No special preparation needed this week.", "이번 주는 특별한 대비가 필요 없을 것 같습니다.")}</p>`}
+    <p class="note">${T("新しい雪の密度は気温から推定（Hedstrom & Pomeroy 1998）。雨は屋根の雪にしみこむと重さになります。予報（Open-Meteo）がはずれることもあり、すでに積もっている雪の重さは含みません。屋根の強さは家ごとに違うので、目安として使ってください。",
+      "New-snow density estimated from air temperature (Hedstrom & Pomeroy 1998); rain soaking into roof snow adds weight. Forecasts (Open-Meteo) can be wrong, and snow already on the roof is not included. Roofs differ — use this as a guide.",
+      "새 눈의 밀도는 기온으로 추정 (Hedstrom & Pomeroy 1998). 비는 지붕 눈에 스며들어 무게가 됩니다. 예보(Open-Meteo)는 틀릴 수 있고, 이미 쌓여 있는 눈의 무게는 포함하지 않습니다. 지붕의 강도는 집마다 다르니 기준으로 써 주세요.")}</p>`;
+}
+function renderAct() { const el = document.getElementById("act"); if (el) el.innerHTML = actHTMLWeek(); }
+
 function renderForecast() {
   renderSummary(); if (D) renderPlacePanel(); setTimeout(() => { if (TL === 35) tlFrame(); }, 0);
+  renderAct();
   const el = document.getElementById("fc"), note = document.getElementById("fcNote");
   if (!FC) { el.innerHTML = `<p class="note">${T("予報を読みこみ中…", "Loading forecast…", "예보 불러오는 중…")}</p>`; note.textContent = ""; return; }
   if (FC.error) { el.innerHTML = `<p class="note">${T("予報を読みこめませんでした", "Could not load the forecast", "예보를 불러오지 못했습니다")} <button class="chip" id="fcRetry">${T("もう一度", "Try again", "다시 불러오기")}</button></p>`;
@@ -1147,7 +1193,9 @@ async function init() {
   if (qp.length) choose(+qp[1], +qp[2], null, { quiet: true }); else choose(QUICK[0][2], QUICK[0][3], null, { q: 0, quiet: true });
   initGlobe(); renderHud();
   window.addEventListener("hashchange", route);
-  document.addEventListener("click", e => { const a = e.target.closest("[data-go]"); if (!a) return; e.preventDefault(); route.go = a.dataset.go; if (VIEW === "home") route(); else location.hash = "#/"; });
+  document.addEventListener("click", e => { const a = e.target.closest("[data-go]"); if (!a) return; e.preventDefault(); route.go = a.dataset.go;
+    const v = (document.getElementById(a.dataset.go).closest(".view") || { dataset: { view: "home" } }).dataset.view;
+    if (VIEW === v) route(); else location.hash = v === "home" ? "#/" : "#/" + v; });
   route();
 }
 init();
