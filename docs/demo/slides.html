@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My Town Snow-Quality Chart — demo slides (Team Snow Trend Detective)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  @page{size:1280px 720px;margin:0}
+  :root{--bg:#0b1628;--ink:#eaf2ff;--muted:#a9b8d0;--faint:#71809c;--line:rgba(160,190,255,.2);--mint:#7ef0c4;--violet:#b39dff;--ice:#9ad7ff;--warn:#ffd166}
+  *{box-sizing:border-box}
+  body{margin:0;background:#050b16;font-family:"Inter Tight",system-ui,sans-serif;color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .s{width:1280px;height:720px;position:relative;overflow:hidden;page-break-after:always;padding:46px 56px;
+     background:radial-gradient(ellipse at 15% 0%,rgba(126,240,196,.13),transparent 45%),radial-gradient(ellipse at 90% 10%,rgba(179,157,255,.14),transparent 40%),var(--bg)}
+  .k{font:500 13px "IBM Plex Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--mint)}
+  h1{font-size:60px;line-height:1.02;letter-spacing:-.035em;margin:10px 0 14px;font-weight:800}
+  h2{font-size:40px;line-height:1.08;letter-spacing:-.03em;margin:8px 0 16px;font-weight:800}
+  p{font-size:19px;line-height:1.5;color:var(--muted);margin:0 0 12px}
+  b{color:var(--ink)}
+  .foot{position:absolute;left:56px;right:56px;bottom:22px;display:flex;justify-content:space-between;font:400 11.5px "IBM Plex Mono",monospace;color:var(--faint);letter-spacing:.05em}
+  .n{font:600 46px "IBM Plex Mono",monospace;letter-spacing:-.03em;line-height:1}
+  .shot{border:1px solid var(--line);border-radius:8px;display:block;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+  .tile{border:1px solid var(--line);border-radius:8px;padding:16px 18px;background:rgba(150,180,230,.06)}
+  .tile .n{color:var(--violet)} .tile.i .n{color:var(--ice)} .tile.m .n{color:var(--mint)}
+  .tile p{font-size:15.5px;margin:8px 0 0}
+  ul{margin:0;padding-left:20px} li{font-size:18px;color:var(--muted);margin:7px 0;line-height:1.45}
+  .chip{display:inline-block;font:500 13px "IBM Plex Mono",monospace;border:1px solid var(--line);border-radius:999px;padding:5px 12px;margin:0 8px 8px 0;color:var(--ink)}
+  .ai{font:400 10px "IBM Plex Mono",monospace;color:var(--faint);letter-spacing:.06em}
+</style>
+</head>
+<body>
+
+<!-- 1 · Title -->
+<section class="s" style="padding:0">
+  <img src="img/globe.jpg" style="position:absolute;right:-30px;top:-10px;height:740px;width:740px;object-fit:cover;opacity:.9;border-radius:50%;-webkit-mask-image:radial-gradient(circle,#000 62%,transparent 71%);mask-image:radial-gradient(circle,#000 62%,transparent 71%)">
+  <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,22,40,1) 0%,rgba(11,22,40,.92) 46%,rgba(11,22,40,0) 70%)"></div>
+  <div style="position:relative;padding:58px 60px;width:760px">
+    <div style="display:flex;align-items:center;gap:12px"><img src="../assets/logo.svg" style="width:44px;height:44px;border-radius:50%;background:#fff"><div><div style="font-weight:700;font-size:18px">Snow Trend Detective</div><div class="ai">Logo: AI-assisted (SVG code generated with Claude)</div></div></div>
+    <p class="k" style="margin-top:48px">NASA Space Apps Challenge 2026 · Be An Earth System Trend Detective</p>
+    <h1>My Town<br>Snow-Quality Chart</h1>
+    <p style="font-size:24px;color:var(--mint);margin-bottom:22px">Is Hokkaido's light, dry snow turning into heavy, wet snow?</p>
+    <p style="font-size:19px"><b>Team Snow Trend Detective</b> — Kim Dohyun (solo)<br>Sapporo local event · online from South Korea</p>
+    <p style="font-size:16px">NASA POWER · NASA MODIS · NASA Blue Marble · JAXA GSMaP · Japan Meteorological Agency</p>
+  </div>
+  <div class="foot"><span>1 / 7</span><span>hitori839.github.io/snow-trend-detective</span></div>
+</section>
+
+<!-- 2 · Why this matters -->
+<section class="s">
+  <p class="k">The problem</p>
+  <h2>Snow quality, not just snow amount,<br>decides how a snowy city lives.</h2>
+  <div class="grid2" style="margin-top:22px">
+    <div>
+      <p>A winter trip to Sapporo in 2024 started a question: will Hokkaido's famous light, dry snow last?</p>
+      <p>Light snow brings skiers from around the world. <b>Wet, heavy snow</b> loads roofs, trees and power lines — and when it melts and refreezes, streets turn to ice.</p>
+      <p>Snow quality is set by the temperature it falls in: <b>≤ −5 °C light</b>, <b>warmer than −2 °C heavy</b>.</p>
+    </div>
+    <div style="display:grid;gap:14px">
+      <div class="tile"><div class="n">1,813</div><p>people taken to hospital after falling on Sapporo's winter roads in winter 2025 — a record. The worst days come when <b>wet snow or rain freezes</b> afterwards.</p></div>
+      <div class="tile i"><div class="n">¥28.6 bn</div><p>Sapporo's snow-removal budget for FY2026, the largest ever.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>2 / 7 · Team Snow Trend Detective · Kim Dohyun</span><span>Sources: Sapporo City Fire Bureau (via tsurutsuru.jp); STV News 28 Oct 2026</span></div>
+</section>
+
+<!-- 3 · Data & method -->
+<section class="s">
+  <p class="k">How we detect the trend</p>
+  <h2>35 winters, every snow day counted,<br>four independent eyes.</h2>
+  <div class="grid2" style="margin-top:18px;grid-template-columns:1.05fr .95fr">
+    <ul>
+      <li><b>NASA POWER</b> (MERRA-2) daily temperature &amp; snowfall — 43 cells over Hokkaido, 1992–2026</li>
+      <li><b>JMA ground stations</b> — 10 stations, daily snowfall, depth, temperature</li>
+      <li><b>NASA MODIS</b> monthly snow cover (GIBS tiles turned back into %)</li>
+      <li><b>JAXA GSMaP</b> daily satellite precipitation → <b>cm of snow per mm of water</b>: a direct measure of how heavy the snow is</li>
+    </ul>
+    <div>
+      <div class="tile m"><p style="margin:0"><b>Statistics</b><br>One value per winter · Mann–Kendall + Sen's slope · Benjamini–Hochberg FDR · 500-run shuffle test that keeps spatial correlation · cut-offs moved from −3 to 0 °C (same result) · “certain” only when sources agree</p></div>
+      <div class="tile" style="margin-top:14px"><p style="margin:0"><b>Cause</b><br>Heavy-snow days regressed on detrended winter temperature and precipitation at each station</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>3 / 7 · Team Snow Trend Detective · Kim Dohyun</span><span>Challenge: Be An Earth System Trend Detective</span></div>
+</section>
+
+<!-- 4 · Findings -->
+<section class="s">
+  <p class="k">What changed (winters 1992–2026)</p>
+  <h2>Hokkaido's snow is getting wetter and heavier,<br>and leaving earlier in spring.</h2>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px">
+    <div class="tile"><div class="n">10/10</div><p>JMA stations: more <b>heavy-snow days</b>; NASA 15/43 cells up significantly, 0 down (chance 1.2 %)</p></div>
+    <div class="tile"><div class="n">9/10</div><p>stations: <b>less snow per mm of water</b> — the snow itself is heavier. Niseko 2.74 → 1.96 cm/mm</p></div>
+    <div class="tile"><div class="n">+17%</div><p>weight of 1 m of new snow on a Sapporo roof: <b>55 → 64 kg/m²</b></p></div>
+    <div class="tile i"><div class="n">−13 pt</div><p>April snow cover per decade (NASA MODIS, p = 0.003); all 42 cells down</p></div>
+  </div>
+  <p style="margin-top:20px">Also: wet heavy storms up at 10/10 stations; icy-road days up in 15/43 cells. <b>Not yet certain:</b> light-snow days lean down (chance 6 %) — we say so.</p>
+  <div class="foot"><span>4 / 7 · Team Snow Trend Detective · Kim Dohyun</span><span>Data: NASA POWER, NASA MODIS, JAXA GSMaP, JMA</span></div>
+</section>
+
+<!-- 5 · Why & where -->
+<section class="s">
+  <p class="k">Why, and where next</p>
+  <h2>Warmer, wetter winters explain two thirds.</h2>
+  <div class="grid2" style="grid-template-columns:1fr 1fr;gap:22px">
+    <div>
+      <img class="shot" src="img/why1.jpg" style="width:100%">
+      <p style="margin-top:12px;font-size:16.5px">Winters warmed <b>+0.3 °C per decade</b> (43/43 cells, 10/10 stations). Warming alone explains <b>46 %</b> of the rise in heavy-snow days; with winter precipitation (up at 10/10 stations), <b>66 %</b>.</p>
+    </div>
+    <div>
+      <img class="shot" src="img/why2.jpg" style="width:100%">
+      <p style="margin-top:12px;font-size:16.5px">Places already warmer than −3 °C changed most; the cold interior barely moved → <b>towns now at −5 to −3 °C are next</b>. Worldwide (178 snowy points) heavy snow rises where winters average −10 to −2 °C — Hokkaido sits right there.</p>
+    </div>
+  </div>
+  <div class="foot"><span>5 / 7 · Team Snow Trend Detective · Kim Dohyun</span><span>Matches MEXT &amp; JMA, Climate Change in Japan 2025, Ch. 6</span></div>
+</section>
+
+<!-- 6 · The app -->
+<section class="s">
+  <p class="k">The app · user experience</p>
+  <h2 style="font-size:34px">Click anywhere on Earth. See your snow, and what to do.</h2>
+  <div style="display:grid;grid-template-columns:1.1fr .95fr .95fr;gap:16px;align-items:start">
+    <div><img class="shot" src="img/nutshell.jpg" style="width:100%"><p style="font-size:14.5px;margin-top:8px"><b>Your town in a nutshell</b> + a 7-day snow-quality forecast (⚠️ = wet snow or rain that will freeze)</p></div>
+    <div><img class="shot" src="img/card.jpg" style="width:100%"><p style="font-size:14.5px;margin-top:8px"><b>One card per change</b>: Hokkaido-wide verdict, your town, then “So” — what to do</p></div>
+    <div><img class="shot" src="img/world.jpg" style="width:100%;margin-bottom:10px"><img class="shot" src="img/tl2050.jpg" style="width:100%"><p style="font-size:14.5px;margin-top:8px"><b>World mode</b> (here: Zermatt, live NASA data) and a <b>timeline</b> 1992 → tomorrow → 2050</p></div>
+  </div>
+  <div class="foot"><span>6 / 7 · Team Snow Trend Detective · Kim Dohyun</span><span>Japanese · English · Korean · works on phones · installable</span></div>
+</section>
+
+<!-- 7 · Impact & next -->
+<section class="s">
+  <p class="k">Who uses it · what's next</p>
+  <h2>From 35 years of data to tomorrow's decision.</h2>
+  <div class="grid2" style="grid-template-columns:1.25fr .75fr">
+    <div>
+      <ul>
+        <li><b>Residents:</b> prepare the day before a ⚠️ — anti-slip shoes, roof clearing by weight, not just depth</li>
+        <li><b>City snow crews:</b> rank grit, snow hauling and road heating where heavy snow and icy days rose; open CSV/JSON data</li>
+        <li><b>Community snow help:</b> heavy-snow days are when older residents need help at their doors</li>
+        <li><b>Ski areas &amp; tourism:</b> plan for an earlier spring melt</li>
+      </ul>
+      <p style="margin-top:16px"><b>Next:</b> link with Sapporo's snow-removal planning, validate ⚠️ with daily accident data, and add ground stations outside Hokkaido.</p>
+    </div>
+    <div style="text-align:center">
+      <img src="qr.png" style="width:220px;height:220px;border-radius:8px;background:#fff;padding:8px">
+      <p style="font-size:15px;margin-top:10px"><b>Try your own town</b><br>hitori839.github.io/snow-trend-detective</p>
+      <p class="ai" style="margin-top:8px">Code: github.com/hitori839/snow-trend-detective<br>Code and texts written with help from an AI assistant (Claude); see project page</p>
+    </div>
+  </div>
+  <div class="foot"><span>7 / 7 · Team Snow Trend Detective · Kim Dohyun</span><span>NASA POWER · NASA MODIS (GIBS) · NASA Blue Marble · JAXA GSMaP · JMA · Sapporo City Fire Bureau · Open-Meteo</span></div>
+</section>
+
+</body>
+</html>
