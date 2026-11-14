@@ -880,7 +880,7 @@ function actHTMLWeek() {
   return `<h2>${P.cum >= 1 ? T(`この1週間で、屋根の雪は約${fmt(P.cum, 0)}kg/m²増える見込み。`, `About ${fmt(P.cum, 0)} kg/m² of snow may build up on roofs this week.`, `이번 주 지붕 눈은 약 ${fmt(P.cum, 0)}kg/m² 늘어날 전망.`) : T("この1週間、屋根に積もる雪はほとんどない見込み。", "Little snow is expected to build up on roofs this week.", "이번 주 지붕에 쌓일 눈은 거의 없을 전망.")}</h2>
     <div class="roofrow">${bars}</div>
     <p class="note">${T("棒＝その日までにたまる新しい雪の重さ（kg/m²、溶ける分は入れない多めの見積もり）。濃い部分＝その日に増える分。", "Bars = new snow building up on a roof (kg/m², ignoring melt, so an upper estimate). Bright part = that day's addition.", "막대 = 그날까지 쌓이는 새 눈의 무게 (kg/m², 녹는 양은 빼지 않은 넉넉한 추정). 밝은 부분 = 그날 늘어나는 양.")}
-      ${heavier != null && heavier > 5 ? T(`同じ深さが −8℃の軽い雪だった場合より <b>${heavier}%重い</b>。`, ` The same depth as −8 °C light snow would weigh <b>${heavier}% less</b>.`, ` 같은 깊이가 −8℃의 가벼운 눈이었다면 <b>${heavier}% 가벼웠을</b> 것.`) : ""}</p>
+      ${heavier != null && heavier > 5 && P.cum >= 10 ? T(`同じ深さの −8℃の軽い雪より <b>${heavier}%重い</b>雪です。`, ` That is <b>${heavier}% heavier</b> than the same depth of −8 °C light snow.`, ` 같은 깊이의 −8℃ 가벼운 눈보다 <b>${heavier}% 무거운</b> 눈입니다.`) : ""}</p>
     <p class="lbl mono" style="margin-top:14px">${T("今週の備えカレンダー", "This week's plan", "이번 주 대비 달력")}</p>
     ${P.acts.length ? `<ul class="acts">${P.acts.map(([w, i, t]) => `<li><span class="aw mono">${w}</span><span class="ai">${i}</span><span>${t}</span></li>`).join("")}</ul>` : `<p>${T("今週は特別な備えは必要なさそうです。", "No special preparation needed this week.", "이번 주는 특별한 대비가 필요 없을 것 같습니다.")}</p>`}
     <p class="note">${T("新しい雪の密度は気温から推定（Hedstrom & Pomeroy 1998）。雨は屋根の雪にしみこむと重さになります。予報（Open-Meteo）がはずれることもあり、すでに積もっている雪の重さは含みません。屋根の強さは家ごとに違うので、目安として使ってください。",

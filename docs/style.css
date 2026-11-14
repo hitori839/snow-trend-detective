@@ -366,3 +366,7 @@ ul.acts .aw{color:var(--lime);font-size:12px;padding-top:2px} ul.acts .ai{font-s
 .about-grid p{color:var(--muted);font-size:15px}
 ol.steps{margin:6px 0 0;padding-left:20px} ol.steps li{margin:7px 0;font-size:14.5px;color:var(--muted)}
 @media (max-width:900px){.about-grid{grid-template-columns:1fr}}
+.hud-r .pf-note{display:none}
+.hud-r .profile{max-height:118px}
+.hud-r .tele li{padding:5px 0}
+.hud-r .imp li{padding:4px 0}
