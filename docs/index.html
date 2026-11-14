@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>わが街の雪質カルテ | Snow Trend Detective</title>
+<meta name="generator" content="Code written with AI assistance (Claude, Anthropic)">
 <meta name="description" content="Is Hokkaido's powder snow turning heavy? A phone app that shows 35 years of snow-quality change for your town, checked against NASA, JAXA and JMA data.">
 <link rel="icon" href="assets/logo.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +24,9 @@
 
 <main>
   <section class="hero">
-    <p class="q" data-ja="北海道のパウダースノーは、重い雪に変わりつつあるのか？" data-en="Is Hokkaido's powder snow turning into heavy snow?"></p>
+    <p class="ask" data-ja="北海道のパウダースノーは、重い雪に変わりつつあるのか？" data-en="Is Hokkaido's powder snow turning into heavy snow?"></p>
+    <p class="q" data-ja="北海道の雪は、重くなる方向に動いている。" data-en="Hokkaido's snow is moving toward heavier snow."></p>
+    <div class="facts" id="facts"></div>
     <p class="lead" data-ja="場所を選ぶと、1992〜2026年の冬（12〜3月）の「雪の質」の変化をカルテにします。NASA・JAXA・気象庁のデータがそろったときだけ「確か」と表示します。" data-en="Pick a place to see how its winter snow quality changed from 1992 to 2026 (Dec–Mar). We only say “certain” when NASA, JAXA and JMA data agree."></p>
   </section>
 
@@ -46,6 +49,8 @@
     <h2 data-ja="雪質カルテ" data-en="Snow-quality chart"></h2>
     <p class="note" data-ja="1990年代（1992〜2001年の冬）と2020年代（2017〜2026年の冬）の平均を比べ、35年の傾き（10年あたり）を検定しています。" data-en="We compare the 1990s (winters 1992–2001) with the 2020s (2017–2026) and test the 35-year trend (per decade)."></p>
     <div class="cards" id="cards"></div>
+
+    <div class="row share"><button id="shareBtn" class="btn" data-ja="📷 結果をカードにして保存・共有" data-en="📷 Save / share as a card"></button></div>
 
     <h2 data-ja="冬のタイムマシン" data-en="Winter time machine"></h2>
     <div class="card tm">
@@ -80,6 +85,7 @@
 </main>
 <footer>
   <p>NASA Space Apps Challenge 2026 · Be An Earth System Trend Detective · Team Snow Trend Detective (Sapporo, online from Korea)</p>
+  <p>Code and texts written with help from an AI assistant (Claude). Data: NASA POWER, JAXA GSMaP, JMA.</p>
 </footer>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>

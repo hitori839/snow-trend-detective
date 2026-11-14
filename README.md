@@ -30,4 +30,5 @@ python3 analyze.py        # -> docs/data.json
 cd ../docs && python3 -m http.server
 ```
 
-Built during the hackathon (Nov 14–15, 2026) with help from an AI coding assistant (Claude); all numbers come from the data above.
+## Use of AI
+The team chose the topic (from a winter trip to Sapporo), decided the app's purpose and main features (my-town view, place comparison, winter time machine), chose the data sources and reviewed every result. An AI assistant (Claude, Anthropic) was used to write most of the code and data-processing scripts, to suggest refinements to the idea, and to help with Japanese and English text. The team logo was drawn as SVG code generated with the AI assistant. All numbers come from the data above.

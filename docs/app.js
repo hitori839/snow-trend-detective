@@ -21,7 +21,7 @@ function applyLang() {
   document.getElementById("lang").textContent = LANG === "ja" ? "EN" : "日本語";
   document.getElementById("quick").innerHTML = QUICK.map((q, i) => `<button class="chip" data-i="${i}">${T(q[0], q[1])}</button>`).join("");
   document.querySelectorAll("#quick .chip").forEach(b => (b.onclick = () => { const q = QUICK[+b.dataset.i]; choose(q[2], q[3], T(q[0], q[1])); }));
-  renderAbout(); renderLayerChips(); drawMap2();
+  renderAbout(); renderFacts(); renderLayerChips(); drawMap2();
   if (places.length) render();
 }
 
@@ -171,6 +171,40 @@ function drawMap2() {
   document.getElementById("legend").textContent = T("色：赤＝増えた、青＝減った（濃いほど大きい）。太い枠＝統計的に有意（p<0.05）。四角＝NASAの約50kmマス、丸＝気象庁の観測所。", "Colour: red = increased, blue = decreased (darker = larger). Thick outline = significant (p < 0.05). Squares = NASA ~50 km cells, circles = JMA stations.");
 }
 
+function renderFacts() {
+  const st = D.stations.map(s => s.trend.heavy).filter(Boolean), ce = D.cells.map(c => c.trend.heavy).filter(Boolean);
+  const cp = D.cells.map(c => c.trend.powder).filter(Boolean);
+  const stUp = st.filter(t => t.slope10 > 0).length, stSig = st.filter(t => t.slope10 > 0 && t.p < 0.05).length;
+  const ceSig = ce.filter(t => t.slope10 > 0 && t.p < 0.05).length, ceDown = ce.filter(t => t.slope10 < 0 && t.p < 0.05).length;
+  const pUp = cp.filter(t => t.slope10 > 0).length, pDown = cp.filter(t => t.slope10 < 0 && t.p < 0.05).length;
+  document.getElementById("facts").innerHTML = [
+    ["", `${stUp}/${st.length}`, T(`気象庁の観測所で「重い雪の日」が増える方向（うち${stSig}か所は統計的に有意）`, `JMA stations where heavy-snow days rose (${stSig} significant)`)],
+    ["", `${ceSig}/${ce.length}`, T(`NASAの約50kmマスで「重い雪の日」が有意に増加（有意に減ったマスは${ceDown}）`, `NASA ~50 km cells with a significant rise in heavy-snow days (${ceDown} significant falls)`)],
+    ["p", `${pUp}/${cp.length}`, T(`NASAのマスで「パウダーの日」が増えた数（有意に減ったマスは${pDown}）`, `NASA cells where powder days rose (${pDown} significant falls)`)],
+  ].map(([c, b, t]) => `<div class="fact ${c}"><b>${b}</b><span>${t}</span></div>`).join("");
+}
+
+async function shareCard() {
+  const p = places[0], near = p.dist <= 40, s = near ? p.st.series : p.cell.series;
+  const a = k => mean(s[k].slice(0, 10)), b = k => mean(s[k].slice(-10));
+  const W = 1080, H = 1080, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
+  g.fillStyle = "#f5f8fc"; g.fillRect(0, 0, W, H); g.fillStyle = "#2c74d4"; g.fillRect(0, 0, 36, H);
+  g.fillStyle = "#10233f"; g.font = "900 64px 'Noto Sans JP'"; g.fillText(p.label, 90, 150);
+  g.font = "700 34px 'Noto Sans JP'"; g.fillStyle = "#2c74d4"; g.fillText(T("わが街の雪質カルテ　1990年代 → 2020年代", "My Town Snow-Quality Chart · 1990s → 2020s"), 90, 215);
+  const rows = [["💧", T("重い雪の日", "Heavy-snow days"), "heavy", "#c2410c"], ["❄️", T("パウダーの日", "Powder days"), "powder", "#2c74d4"], ["🧊", T("つるつる路面の日", "Icy-road days"), "icy", "#0e7490"]];
+  rows.forEach(([ic, lab, k, col], i) => {
+    const y = 360 + i * 190; g.fillStyle = "#ffffff"; g.fillRect(90, y - 90, 900, 160); g.strokeStyle = "#d6e2f1"; g.strokeRect(90, y - 90, 900, 160);
+    g.fillStyle = "#10233f"; g.font = "700 40px 'Noto Sans JP'"; g.fillText(`${ic} ${lab}`, 120, y - 25);
+    g.font = "900 64px 'Noto Sans JP'"; g.fillStyle = col; g.fillText(`${fmt(a(k), 0)} → ${fmt(b(k), 0)}${T("日", " days")}`, 120, y + 50);
+  });
+  g.fillStyle = "#4b6385"; g.font = "400 28px 'Noto Sans JP'";
+  g.fillText(T(`データ：NASA POWER・JAXA GSMaP・気象庁${near ? p.st.ja : ""}（冬＝12〜3月）`, `Data: NASA POWER, JAXA GSMaP, JMA ${near ? p.st.en : ""} (winter = Dec–Mar)`), 90, 960);
+  g.fillText("Snow Trend Detective · NASA Space Apps 2026", 90, 1010);
+  const blob = await new Promise(r => cv.toBlob(r, "image/png")); const file = new File([blob], "snow-karte.png", { type: "image/png" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: "わが街の雪質カルテ" }); return; } catch (e) {} }
+  const u = URL.createObjectURL(blob), l = document.createElement("a"); l.href = u; l.download = "snow-karte.png"; l.click(); setTimeout(() => URL.revokeObjectURL(u), 2000);
+}
+
 function renderAbout() {
   document.getElementById("about").innerHTML = [
     T("期間：1992〜2026年の冬（前年12月〜3月、1月の年で表示）", "Period: winters 1992–2026 (Dec–Mar, labelled by January)"),
@@ -198,6 +232,7 @@ async function init() {
   map = L.map("map", { scrollWheelZoom: false }).setView([43.4, 142.6], 6); tiles().addTo(map);
   map.on("click", e => choose(e.latlng.lat, e.latlng.lng));
   map2 = L.map("map2", { scrollWheelZoom: false }).setView([43.4, 142.8], 6); tiles().addTo(map2);
+  document.getElementById("shareBtn").onclick = shareCard;
   document.getElementById("lang").onclick = () => { LANG = LANG === "ja" ? "en" : "ja"; applyLang(); };
   document.getElementById("search").onsubmit = e => { e.preventDefault(); const q = document.getElementById("q").value.trim(); if (q) geocode(q); };
   document.getElementById("gps").onclick = () => navigator.geolocation ? navigator.geolocation.getCurrentPosition(

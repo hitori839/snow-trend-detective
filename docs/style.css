@@ -53,3 +53,10 @@ h2{font-size:20px;margin:28px 0 10px}
 footer{text-align:center;font-size:12px;color:var(--muted);padding:24px 16px}
 .leaflet-container{font-family:inherit}
 @media (max-width:600px){.hero .q{font-size:22px}h1{font-size:17px}.en{display:none}}
+.ask{font-size:15px;font-weight:700;color:var(--blue);margin:6px 0 0}
+.facts{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin:10px 0 14px}
+.fact{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.fact b{display:block;font-size:26px;font-weight:900;color:var(--heavy)}
+.fact.p b{color:var(--powder)}
+.fact span{font-size:14px;color:var(--muted)}
+.share{margin-top:14px}
