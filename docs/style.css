@@ -210,3 +210,8 @@ ul.sum li b{font-size:14px;font-weight:600;white-space:nowrap}
 .sum-fc{margin:12px 0 0;font-weight:700;font-size:14.5px}
 .link-in{display:inline-block;margin-left:6px;font:600 12px var(--mono);color:var(--ink);text-underline-offset:4px}
 .places{margin-bottom:14px}
+
+.region{font-size:12.5px;font-weight:600;margin-top:8px;padding:6px 10px;border-radius:6px;background:var(--bg);border:1px solid var(--line)}
+.region.ok{border-color:color-mix(in srgb,var(--ok) 45%,var(--line))}
+.why{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55;border-left:2px solid var(--line);padding-left:8px}
+.kc>.region,.kc>.why{grid-column:1}

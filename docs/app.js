@@ -109,8 +109,9 @@ function verdict(g, n) {
   const same = sgn(g) !== 0 && sgn(g) === sgn(n);
   if (same && g.p < 0.05 && n.p < 0.05) return ["ok", T("✅ 確か：NASAと地上観測がそろって有意", "✅ Certain: NASA and ground data agree, both significant", "✅ 확실: NASA와 지상 관측이 같은 방향, 둘 다 유의")];
   if (same && Math.min(g.p, n.p) < 0.1) return ["mid", T("🟡 傾向あり：同じ方向、片方が有意", "🟡 Likely: same direction, one significant", "🟡 경향 있음: 같은 방향, 한쪽만 유의")];
-  if (same) return ["no", T("⚪ まだ言えない：同じ方向だが有意でない", "⚪ Not yet clear: same direction, not significant", "⚪ 아직 말할 수 없음: 같은 방향이지만 유의하지 않음")];
-  return ["no", T("⚪ まだ言えない：データの方向が違う", "⚪ Not yet clear: data disagree", "⚪ 아직 말할 수 없음: 자료끼리 방향이 다름")];
+  if (same) return ["no", T("⚪ この街だけではまだ言えない：同じ向きだが有意でない", "⚪ Not clear for this town alone: same direction, not significant", "⚪ 이 동네만으로는 아직 말할 수 없음: 같은 방향이지만 유의하지 않음")];
+  if (sgn(g) === 0 || sgn(n) === 0) return ["no", T("⚪ この街だけではまだ言えない：片方は変化なし", "⚪ Not clear for this town alone: one source shows no change", "⚪ 이 동네만으로는 아직 말할 수 없음: 한쪽은 변화 없음"), "flat"];
+  return ["no", T("⚪ この街だけではまだ言えない：地上とNASAで向きが逆", "⚪ Not clear for this town alone: ground and NASA point opposite ways", "⚪ 이 동네만으로는 아직 말할 수 없음: 지상과 NASA의 방향이 반대"), "opp"];
 }
 
 function satCardHTML(k, p, idx) {
@@ -126,7 +127,7 @@ function satCardHTML(k, p, idx) {
   return `<div class="card kc"><h3>${K.icon} ${T(K.ja, K.en, K.ko)}</h3><div class="sub">${T(K.sub_ja, K.sub_en, K.sub_ko)}</div>
   <div class="nums"><span>${T("2000年代", "2000s", "2000년대")} <b class="big">${fmt(a, K.stOnly ? 1 : 0)}</b>${u}</span><span>→ ${T("2020年代", "2020s", "2020년대")} <b class="big">${fmt(b, K.stOnly ? 1 : 0)}</b>${u}</span>
   <span class="arrow">${arrow} ${tr ? fmt(tr.slope10) : "–"}${K.stOnly ? u : T("ポイント", " pts", "%p")}/${T("10年", "decade", "10년")}</span></div>
-  <div class="cbox"><canvas id="c${idx}"></canvas></div><span class="badge ${cls}">${txt}</span>
+  <div class="cbox"><canvas id="c${idx}"></canvas></div><span class="badge ${cls}">${txt}</span>${regionHTML(k)}
   <div class="cmpline">${foot}</div></div>`;
 }
 function stormUp() {
@@ -134,19 +135,31 @@ function stormUp() {
   return D.stations.filter(s => { const a = s.series.storm_wet.slice(i0); return mean(a.slice(-10)) > mean(a.slice(0, 10)); }).length;
 }
 
+function regionHTML(k) {
+  const fk = KEYS[k].sat || k, F = D.field && D.field[fk];
+  if (k === "storm") { const u = stormUp(); return `<div class="region ${u >= 8 ? "ok" : "no"}">${u >= 8 ? "✅ " : "⚪ "}${T(`北海道全体：10観測所中${u}か所で増加`, `All Hokkaido: rising at ${u} of 10 stations`, `홋카이도 전체: 관측소 10곳 중 ${u}곳에서 증가`)}</div>`; }
+  if (!F) return "";
+  const m = F.p_field < 0.05 ? "ok" : F.p_field < 0.1 ? "mid" : "no", mk = { ok: "✅", mid: "🟡", no: "⚪" }[m];
+  const dir = F.direction === "up" ? T("増加", "up", "증가") : T("減少", "down", "감소");
+  return `<div class="region ${m}">${mk} ${T(`北海道全体：${F.of}マス中${F.cells_sig}マスで有意に${dir}（偶然の確率 ${fmt(F.p_field * 100, 1)}%）`, `All Hokkaido: ${F.cells_sig} of ${F.of} cells significantly ${dir} (chance ${fmt(F.p_field * 100, 1)}%)`, `홋카이도 전체: ${F.of}칸 중 ${F.cells_sig}칸에서 유의하게 ${dir} (우연일 확률 ${fmt(F.p_field * 100, 1)}%)`)}</div>`;
+}
+const WHY = () => `<div class="why">${T("なぜずれる？ 地上は街の中の1地点、NASAは約50km四方の平均です。街の熱や海・山の近さで、1か所だけの向きはずれることがあります。だから北海道全体でも確かめています。",
+  "Why can they differ? The ground station is one point in town; NASA averages a ~50 km cell. Urban heat, coast or mountains can tilt a single spot, which is why we also check all of Hokkaido.",
+  "왜 어긋날까? 지상은 동네 안의 한 지점, NASA는 약 50km 사방의 평균입니다. 도시의 열이나 바다·산과의 거리 때문에 한 곳만의 방향은 어긋날 수 있습니다. 그래서 홋카이도 전체로도 확인합니다.")}</div>`;
+
 function cardHTML(k, p, idx) {
   if (KEYS[k].sat) return satCardHTML(k, p, idx);
   const K = KEYS[k], near = p.dist <= 40;
   const ser = near ? p.st.series[k] : p.cell.series[k];
   const a = mean(ser.slice(0, 10)), b = mean(ser.slice(-10));
   const tr = near ? p.st.trend[k] : p.cell.trend[k];
-  const [cls, txt] = verdict(near ? p.st.trend[k] : null, p.cell.trend[k]);
+  const [cls, txt, kind] = verdict(near ? p.st.trend[k] : null, p.cell.trend[k]);
   const unit = T(K.unit, K.unit_en, K.unit_ko);
   const arrow = tr ? (tr.slope10 > 0 ? "↑" : tr.slope10 < 0 ? "↓" : "→") : "";
   return `<div class="card kc"><h3>${K.icon} ${T(K.ja, K.en, K.ko)}</h3><div class="sub">${T(K.sub_ja, K.sub_en, K.sub_ko)}</div>
   <div class="nums"><span>${T("1990年代", "1990s", "1990년대")} <b class="big">${fmt(a, 0)}</b>${unit}</span><span>→ ${T("2020年代", "2020s", "2020년대")} <b class="big">${fmt(b, 0)}</b>${unit}</span>
   <span class="arrow">${arrow} ${tr ? fmt(tr.slope10) : "–"}${unit}/${T("10年", "decade", "10년")}</span></div>
-  <div class="cbox"><canvas id="c${idx}"></canvas></div><span class="badge ${cls}">${txt}</span>
+  <div class="cbox"><canvas id="c${idx}"></canvas></div><span class="badge ${cls}">${txt}</span>${regionHTML(k)}${kind === "opp" ? WHY() : ""}
   <div class="cmpline">${near ? T(`地上：気象庁${p.st.ja}（${fmt(p.dist, 0)}km）`, `Ground: JMA ${p.st.en} (${fmt(p.dist, 0)} km)`, `지상: 기상청 ${STKO[p.st.en] || p.st.en} (${fmt(p.dist, 0)}km)`) : T("地上観測が40km以内にないためNASAデータで表示", "No ground station within 40 km, NASA data shown", "40km 안에 지상 관측소가 없어 NASA 자료로 표시")} · NASA ${p.cell.trend[k] ? fmt(p.cell.trend[k].slope10) + unit + "/" + T("10年", "dec", "10년") + " (p=" + fmt(p.cell.trend[k].p, 2) + ")" : "–"}${near && tr ? " · " + T("地上", "ground", "지상") + " p=" + fmt(tr.p, 2) : ""}</div></div>`;
 }
 
@@ -323,7 +336,8 @@ function render() {
   chartRefs.forEach(c => c.destroy()); chartRefs = [];
   const [p, p2] = places;
   renderPlaces(); renderEntries(p); renderSummary();
-  const keys = ["powder", "heavy", "icy", "share", "spring", "storm"];
+  const rank = { ok: 0, mid: 1, no: 2 };
+  const keys = ["heavy", "spring", "storm", "powder", "icy", "share"].map((k, i) => [k, i]).sort((x, y) => rank[indicatorStat(x[0], p).mark] - rank[indicatorStat(y[0], p).mark] || x[1] - y[1]).map(x => x[0]);
   document.getElementById("cards").innerHTML = keys.map((k, i) => cardHTML(k, p, i)).join("");
   if (VIEW === "karte") keys.forEach((k, i) => drawChart("c" + i, p, k, p2));
   document.getElementById("tmYear").textContent = tmYear;
