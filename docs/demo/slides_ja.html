@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>わが街の雪質カルテ — 発表スライド（日本語）</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;700;800&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+JP:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  @page{size:1280px 720px;margin:0}
+  :root{--bg:#0b1628;--ink:#eaf2ff;--muted:#a9b8d0;--faint:#71809c;--line:rgba(160,190,255,.2);--mint:#7ef0c4;--violet:#b39dff;--ice:#9ad7ff;--warn:#ffd166}
+  *{box-sizing:border-box}
+  body{margin:0;background:#050b16;font-family:"Noto Sans JP","Inter Tight",sans-serif;color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .s{width:1280px;height:720px;position:relative;overflow:hidden;page-break-after:always;padding:44px 56px;
+     background:radial-gradient(ellipse at 15% 0%,rgba(126,240,196,.13),transparent 45%),radial-gradient(ellipse at 90% 10%,rgba(179,157,255,.14),transparent 40%),var(--bg)}
+  .k{font:600 14px "IBM Plex Mono",monospace;letter-spacing:.14em;color:var(--mint)}
+  h1{font-size:62px;line-height:1.1;margin:10px 0 14px;font-weight:900}
+  h2{font-size:44px;line-height:1.15;margin:8px 0 18px;font-weight:900}
+  p{font-size:22px;line-height:1.55;color:var(--muted);margin:0 0 12px}
+  b{color:var(--ink)}
+  .big{font:700 64px "IBM Plex Mono",monospace;letter-spacing:-.03em;line-height:1}
+  .foot{position:absolute;left:56px;right:56px;bottom:20px;display:flex;justify-content:space-between;font:500 12px "IBM Plex Mono",monospace;color:var(--faint)}
+  .shot{border:1px solid var(--line);border-radius:8px;display:block;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:22px}
+  .tile{border:1px solid var(--line);border-radius:10px;padding:18px 18px;background:rgba(150,180,230,.06)}
+  .tile .big{color:var(--violet);font-size:52px} .tile.i .big{color:var(--ice)}
+  .tile p{font-size:18px;margin:10px 0 0;line-height:1.45}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+  .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:6px 16px;margin:0 8px 8px 0;font-size:18px;color:var(--ink)}
+  .rule{font-size:30px;font-weight:800;margin:6px 0}
+  .rule span{display:inline-block;min-width:210px;font-family:"IBM Plex Mono",monospace;color:var(--mint)}
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="s" style="padding:0">
+  <img src="img/ja_globe.jpg" style="position:absolute;right:-30px;top:-10px;height:740px;width:740px;object-fit:cover;border-radius:50%;-webkit-mask-image:radial-gradient(circle,#000 62%,transparent 71%);mask-image:radial-gradient(circle,#000 62%,transparent 71%)">
+  <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,22,40,1) 0%,rgba(11,22,40,.92) 48%,rgba(11,22,40,0) 72%)"></div>
+  <div style="position:relative;padding:56px 60px;width:780px">
+    <p class="k">NASA Space Apps 2026 · 札幌 · Be An Earth System Trend Detective</p>
+    <h1>わが街の<br>雪質カルテ</h1>
+    <p style="font-size:28px;color:var(--mint)">北海道の軽い雪は、<br>重い雪に変わりつつあるのか？</p>
+    <p style="margin-top:28px">2025年の冬、札幌では <b style="font-size:34px">1,813人</b> が雪道で転んで<br>救急搬送されました（過去最多）。</p>
+    <p>いちばん多い日は、<b>湿った雪や雨が凍った日</b>でした。</p>
+    <p style="font-size:18px;margin-top:24px">チーム Snow Trend Detective　キム・ドヒョン（韓国からオンライン）</p>
+  </div>
+  <div class="foot"><span>1</span><span>出典：札幌市消防局（ウインターライフ推進協議会）</span></div>
+</section>
+
+<!-- 2 -->
+<section class="s">
+  <p class="k">どうやって調べたか</p>
+  <h2>雪の質は、降るときの気温で決まる。</h2>
+  <p class="rule"><span>−5℃以下</span>さらさらの <b style="color:var(--ice)">軽い雪</b></p>
+  <p class="rule"><span>−2℃より上</span>水を多く含んだ <b style="color:var(--violet)">重い雪</b></p>
+  <p style="margin-top:26px">1992〜2026年、<b>35回の冬</b>の雪の日を一日ずつ数えました。</p>
+  <div style="margin-top:14px"><span class="pill">NASA POWER（43マス）</span><span class="pill">NASA MODIS 衛星</span><span class="pill">JAXA GSMaP 衛星</span><span class="pill">気象庁 10観測所</span></div>
+  <p style="font-size:18px;margin-top:18px">偶然かどうかは、500回のシャッフル検定・多重比較の補正・基準を変えた確認で確かめました。</p>
+  <div class="foot"><span>2</span><span>Team Snow Trend Detective</span></div>
+</section>
+
+<!-- 3 -->
+<section class="s">
+  <p class="k">わかったこと</p>
+  <h2>雪の量は変わらない。<br>変わったのは「質」。</h2>
+  <div class="tiles">
+    <div class="tile"><div class="big">10/10</div><p>気象庁10か所すべてで<br><b>重い雪の日が増加</b></p></div>
+    <div class="tile"><div class="big">9/10</div><p>同じ水で積もる雪が減少＝<br><b>雪そのものが重く</b></p></div>
+    <div class="tile"><div class="big">+17%</div><p>屋根の新雪1mの重さ<br>札幌 <b>55→64 kg/m²</b></p></div>
+    <div class="tile i"><div class="big">−13</div><p>4月の雪（NASA衛星）<br><b>10年で−13ポイント</b></p></div>
+  </div>
+  <p style="margin-top:22px">雪の日の数は、札幌で 64→64日。<b>同じ雪が、より暖かいときに降っています。</b></p>
+  <div class="foot"><span>3</span><span>NASA POWER · NASA MODIS · JAXA GSMaP · 気象庁</span></div>
+</section>
+
+<!-- 4 -->
+<section class="s">
+  <p class="k">なぜ・何が起きるか</p>
+  <h2 style="font-size:38px">暖かく湿った冬が、変化の3分の2を説明。</h2>
+  <div class="g2" style="grid-template-columns:.75fr 1.25fr">
+    <div>
+      <p><b>気温</b> 10年で +0.3℃ → <b style="color:var(--violet)">46%</b></p>
+      <p><b>水分</b>（冬の降水）も増加 → <b style="color:var(--ice)">+20%</b></p>
+      <p style="font-size:18px">北極振動・エルニーニョは、35年の傾きがなく原因ではありませんでした。</p>
+      <p style="font-size:18px">国の報告書「日本の気候変動2025」と同じ方向です。</p>
+    </div>
+    <img class="shot" src="img/ja_cq.jpg" style="width:100%">
+  </div>
+  <div class="foot"><span>4</span><span>出典は各項目に記載</span></div>
+</section>
+
+<!-- 5 -->
+<section class="s">
+  <p class="k">これから・どう備えるか</p>
+  <h2 style="font-size:38px">次の10年も「減らない」。だから、今週から備える。</h2>
+  <div class="g2" style="gap:20px">
+    <div>
+      <img class="shot" src="img/ja_three.jpg" style="width:100%;max-height:330px;object-fit:cover;object-position:top">
+      <p style="font-size:17px;margin-top:10px">今の傾き＋日本と欧州の<b>気候モデル</b>（過去35年で確かめた）＝3つの見積もり</p>
+    </div>
+    <div>
+      <img class="shot" src="img/ja_roof.jpg" style="width:100%;max-height:330px;object-fit:cover;object-position:top">
+      <p style="font-size:17px;margin-top:10px"><b>屋根の雪の重さ予報</b>と、⚠️の前日の<b>備えカレンダー</b>（砂まき・高齢の方の雪かき支援）</p>
+    </div>
+  </div>
+  <div class="foot"><span>5</span><span>CMIP6 HighResMIP（MRI-AGCM, EC-Earth3P）· Open-Meteo</span></div>
+</section>
+
+<!-- 6 -->
+<section class="s">
+  <p class="k">だれが使うか・試してください</p>
+  <h2>地球のどこでも、あなたの街の雪を。</h2>
+  <div class="g2" style="grid-template-columns:1.3fr .7fr">
+    <div>
+      <p>🏠 <b>市民</b>：⚠️の前日に滑り止め・屋根の雪下ろし</p>
+      <p>🏛️ <b>市・除雪</b>：変わりやすい街から砂まき・除雪を先に（約286億円の使い方）</p>
+      <p>🤝 <b>地域の支援</b>：重い雪の日に高齢の方の玄関前を</p>
+      <p>⛷️ <b>スキー場</b>：早まる雪どけに合わせた計画</p>
+      <p style="font-size:18px;margin-top:16px">中間発表のあと：世界モード、原因の分析、影響、気候モデル、今週の備えを追加しました。</p>
+    </div>
+    <div style="text-align:center">
+      <img src="qr.png" style="width:240px;height:240px;border-radius:10px;background:#fff;padding:8px">
+      <p style="font-size:18px;margin-top:10px"><b>審査員の皆さんの街も<br>押してみてください</b></p>
+    </div>
+  </div>
+  <div class="foot"><span>6</span><span>hitori839.github.io/snow-trend-detective · コードの多くはAI（Claude）の支援で作成</span></div>
+</section>
+</body>
+</html>
