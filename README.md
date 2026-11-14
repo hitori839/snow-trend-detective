@@ -26,8 +26,8 @@ Snow day = JMA snowfall ≥ 1 cm / NASA snowfall ≥ 1 mm water equivalent. Powd
 ```
 cd scripts
 python3 fetch_power.py && python3 fetch_jma.py && python3 fetch_jaxa.py   # jaxa-earth package
-python3 analyze.py        # -> web/data.json
-cd ../web && python3 -m http.server
+python3 analyze.py        # -> docs/data.json
+cd ../docs && python3 -m http.server
 ```
 
 Built during the hackathon (Nov 14–15, 2026) with help from an AI coding assistant (Claude); all numbers come from the data above.

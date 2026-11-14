@@ -112,9 +112,9 @@ for p, b, ja, en, la, lo in STATIONS:
     ps = power_series(f)[1] if os.path.exists(f) else None
     stations.append({"id": b, "ja": ja, "en": en, "lat": la, "lon": lo, "series": s, "trend": trends(s),
                      "power": {"series": ps, "trend": trends(ps)} if ps else None})
-os.makedirs(os.path.join(ROOT, "web"), exist_ok=True)
+os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
 json.dump({"winters": list(range(W0, W1 + 1)), "cells": cells, "stations": stations,
-           "meta": {"powder_t": -5, "heavy_t": -2, "season": "Dec-Mar"}}, open(os.path.join(ROOT, "web", "data.json"), "w"), ensure_ascii=False, separators=(",", ":"))
+           "meta": {"powder_t": -5, "heavy_t": -2, "season": "Dec-Mar"}}, open(os.path.join(ROOT, "docs", "data.json"), "w"), ensure_ascii=False, separators=(",", ":"))
 print("cells", len(cells), "stations", len(stations))
 for st in stations:
     t = st["trend"]; pt = (st["power"] or {}).get("trend", {})
