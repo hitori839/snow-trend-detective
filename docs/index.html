@@ -8,7 +8,7 @@
 <meta name="description" content="Is Hokkaido's powder snow turning heavy? A phone app that shows 35 years of snow-quality change for your town, checked against NASA, JAXA and JMA data.">
 <link rel="icon" href="assets/logo.svg">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#2f3d36">
+<meta name="theme-color" content="#05070a">
 <link rel="apple-touch-icon" href="assets/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,25 +18,9 @@
 </head>
 <body data-view="home">
 
-<aside class="side">
-  <canvas id="grain" aria-hidden="true"></canvas>
-  <div class="side-in">
-    <a class="brand" href="#/"><img src="assets/logo.svg" alt="" class="logo"><span>Snow Trend Detective</span></a>
-    <div class="side-main">
-      <p class="ask" id="sideAsk"></p>
-      <h1 id="sideH"></h1>
-      <p class="side-lead" id="sideLead"></p>
-      <div class="cta">
-        <a class="btn-o" href="#/" data-go="pick"><span data-ja="自分の街を調べる" data-en="Check my town" data-ko="우리 동네 보기"></span> →</a>
-        <a class="link" href="#/" data-go="method" data-ja="データと方法" data-en="Data and method" data-ko="데이터와 방법"></a>
-      </div>
-    </div>
-    <p class="side-foot mono">NASA SPACE APPS 2026 · SAPPORO · BE AN EARTH SYSTEM TREND DETECTIVE</p>
-  </div>
-</aside>
-
 <div class="main">
   <nav class="top">
+    <a class="brand" href="#/"><img src="assets/logo.svg" alt="" class="logo"><span>Snow Trend Detective</span></a>
     <div class="navlinks mono">
       <a href="#/" data-v="home" data-ja="ホーム" data-en="Home" data-ko="홈"></a>
       <a href="#/karte" data-v="karte" data-ja="雪質カルテ" data-en="Snow chart" data-ko="눈 품질 카르테"></a>
@@ -46,7 +30,38 @@
     <div class="lang mono" id="lang" role="group" aria-label="Language">
       <button data-l="ja">日本語</button><button data-l="en">EN</button><button data-l="ko">한국어</button>
     </div>
+    <span class="clock mono" id="clock"></span>
   </nav>
+<section class="hero" id="hero">
+  <div id="globe" aria-label="Earth globe: drag to turn, click a place"></div>
+  <div class="hud">
+    <div class="hud-tl">
+      <p class="k">System status · Snow Trend Detective</p>
+      <p class="ask" id="sideAsk"></p>
+      <h1 id="sideH"></h1>
+      <p class="lead" id="sideLead"></p>
+      <div class="cta">
+        <a class="btn-o" href="#/" data-go="pick"><span data-ja="自分の街を調べる" data-en="Check my town" data-ko="우리 동네 보기"></span> →</a>
+        <a class="link" href="#/" data-go="method" data-ja="データと方法" data-en="Data and method" data-ko="데이터와 방법"></a>
+      </div>
+    </div>
+    <ul class="hud-modes">
+      <li class="on"><div><span class="ico">✕</span><span class="k" data-ja="いまの場所" data-en="Current place" data-ko="지금 장소"></span><b id="hudPlace">—</b></div></li>
+      <li><a href="#/karte"><span class="ico">▦</span><span class="k">Snow chart</span><b data-ja="雪質カルテ" data-en="Snow-quality chart" data-ko="눈 품질 카르테"></b></a></li>
+      <li><a href="#/future"><span class="ico">◌</span><span class="k">2050</span><b data-ja="未来をのぞく" data-en="2050 preview" data-ko="미래 엿보기"></b></a></li>
+      <li><a href="#/time"><span class="ico">⟲</span><span class="k">Time machine</span><b data-ja="冬のタイムマシン" data-en="Winter time machine" data-ko="겨울 타임머신"></b></a></li>
+    </ul>
+    <div class="hud-r">
+      <p class="k">Evidence · Hokkaido 1992–2026</p>
+      <svg class="wave" viewBox="0 0 200 42" preserveAspectRatio="none" id="hudWave" aria-hidden="true"></svg>
+      <ul class="tele" id="hudStats"></ul>
+    </div>
+    <p class="hud-hint mono" data-ja="地球をドラッグして回し、どこでもクリック → その場所の35年" data-en="Drag to turn the Earth · click anywhere → 35 winters there" data-ko="지구를 드래그해 돌리고, 아무 곳이나 클릭 → 그 장소의 35년"></p>
+    <p class="hud-bl mono">NASA POWER · NASA MODIS · NASA BLUE MARBLE<br>JAXA GSMaP · JMA</p>
+    <p class="hud-br mono" id="hudBr"></p>
+  </div>
+</section>
+<header class="phead"><p class="ask" id="pAsk"></p><h1 id="pH"></h1><p class="lead" id="pLead"></p></header>
 
   <main>
     <!-- ============ HOME ============ -->
@@ -232,6 +247,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/globe.gl@2.32.4/dist/globe.gl.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

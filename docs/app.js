@@ -55,11 +55,65 @@ function applyLang() {
   places.forEach(q => q.geo && !q.geo[LANG] && reverseName(q));
   if (places.length) { render(); renderForecast(); }
 }
+
+// =====================================================================
+// Home hero: 3D Earth (NASA Blue Marble) + HUD. Hokkaido cells coloured by the heavy-snow trend;
+// clicking anywhere on Earth picks that place (world mode outside Hokkaido).
+// =====================================================================
+const TEX = "https://cdn.jsdelivr.net/npm/three-globe@2.31.1/example/img/";
+function initGlobe() {
+  const el = document.getElementById("globe");
+  if (!el || !window.Globe) return;
+  let G;
+  try { G = Globe()(el); } catch (e) { el.innerHTML = ""; return; }   // no WebGL: the HUD still works
+  const pts = D.cells.filter(c => c.trend.heavy).map(c => ({ lat: c.lat, lng: c.lon, v: c.trend.heavy.slope10, sig: c.trend.heavy.p < 0.05 }));
+  G.globeImageUrl(TEX + "earth-blue-marble.jpg").bumpImageUrl(TEX + "earth-topology.png").backgroundColor("rgba(0,0,0,0)")
+    .showAtmosphere(true).atmosphereColor("#9cc8ff").atmosphereAltitude(0.16)
+    .pointsData(pts).pointLat("lat").pointLng("lng").pointRadius(0.2).pointResolution(6)
+    .pointAltitude(d => 0.01 + Math.min(0.12, Math.abs(d.v) * 0.025)).pointColor(d => (d.v > 0 ? (d.sig ? "#ff8a4c" : "rgba(255,138,76,.55)") : "rgba(124,184,255,.75)"))
+    .pointLabel(d => `NASA ${d.lat}°N ${d.lng}°E<br>${T("重い雪の日", "Heavy-snow days", "무거운 눈의 날")} ${d.v > 0 ? "+" : ""}${fmt(d.v)}${T("日/10年", " days/decade", "일/10년")}`)
+    .onPointClick(d => choose(d.lat, d.lng)).onGlobeClick(({ lat, lng }) => choose(lat, lng))
+    .ringColor(() => t => `rgba(215,242,90,${1 - t})`).ringMaxRadius(2.6).ringPropagationSpeed(1.6).ringRepeatPeriod(1100);
+  const size = () => G.width(el.clientWidth).height(el.clientHeight);
+  size(); window.addEventListener("resize", size);
+  const ctl = G.controls(); ctl.autoRotate = true; ctl.autoRotateSpeed = 0.45; ctl.enableZoom = true; ctl.minDistance = 140; ctl.maxDistance = 600;
+  G.pointOfView({ lat: 25, lng: 120, altitude: 2.5 });
+  setTimeout(() => { ctl.autoRotate = false; G.pointOfView({ lat: 41.5, lng: 142.5, altitude: 1.25 }, 2600); }, 1600);
+  el.addEventListener("pointerdown", () => (ctl.autoRotate = false));
+  window.GLOBE = G; globeMark();
+}
+function globeMark() {
+  if (!window.GLOBE) return;
+  window.GLOBE.ringsData(places.map(q => ({ lat: q.la, lng: q.lo })));
+}
+function renderHud() {
+  const hp = document.getElementById("hudPlace"); if (hp && places[0]) hp.textContent = placeLabel(places[0]);
+  const C = D.cause, F = D.field, st = D.stations, slr = st.map(x => x.trend.slr).filter(Boolean);
+  const rows = [
+    [T("重い雪の日（気象庁）", "Heavy-snow days (JMA)", "무거운 눈의 날 (기상청)"), `${st.filter(x => x.trend.heavy && x.trend.heavy.slope10 > 0).length}/${st.length} ↑`],
+    [T("水1mmで積もる雪", "Snow per mm of water", "물 1mm로 쌓이는 눈"), `${slr.filter(t => t.slope10 < 0).length}/${slr.length} ↓`],
+    [T("重い大雪・大雨（JAXA）", "Wet heavy storms (JAXA)", "무거운 폭설·폭우 (JAXA)"), `${stormUp()}/10 ↑`],
+    [T("4月の雪（NASA MODIS）", "April snow (NASA MODIS)", "4월 눈 (NASA MODIS)"), `${fmt(D.hokkaido.trend.cov_apr.slope10, 1)} pt/10y`],
+    [T("冬の気温（NASA）", "Winter temperature (NASA)", "겨울 기온 (NASA)"), `+${fmt(C.hok_trend.slope10, 2)} °C/10y`],
+    [T("気温で説明できる割合", "Explained by warming", "기온으로 설명되는 비율"), `${fmt(C.explained_share * 100, 0)} %`],
+    [T("偶然の確率（重い雪）", "Chance level (heavy snow)", "우연일 확률 (무거운 눈)"), `${fmt(F.heavy.p_field * 100, 1)} %`],
+  ];
+  document.getElementById("hudStats").innerHTML = rows.map(([a, b]) => `<li><span>${a}</span><b>${b}</b></li>`).join("");
+  // small line: Hokkaido winter temperature, 1992–2026
+  const t = C.hok_temp.filter(v => v != null), lo = Math.min(...t), hi = Math.max(...t);
+  const pts = C.hok_temp.map((v, i) => v == null ? null : `${(i / (C.hok_temp.length - 1) * 200).toFixed(1)},${(38 - (v - lo) / (hi - lo) * 34).toFixed(1)}`).filter(Boolean).join(" ");
+  document.getElementById("hudWave").innerHTML = `<polyline points="${pts}" fill="none" stroke="#d7f25a" stroke-width="1.4"/><line x1="0" y1="40" x2="200" y2="40" stroke="rgba(255,255,255,.2)"/>`;
+  document.getElementById("hudBr").innerHTML = `${T("冬の平均気温", "Winter mean temperature", "겨울 평균기온")}<br><b>${fmt(mean(C.hok_temp.slice(0, 10)), 1)} → ${fmt(mean(C.hok_temp.slice(-10)), 1)} °C</b>`;
+}
+function tickClock() { const c = document.getElementById("clock"); if (c) c.textContent = new Date().toISOString().slice(11, 19) + " UTC"; }
+
 function renderSide() {
   const [a, h, l] = SIDE[VIEW] || SIDE.home;
   document.getElementById("sideAsk").textContent = T(...a);
   document.getElementById("sideH").textContent = T(...h);
   document.getElementById("sideLead").textContent = T(...l);
+  document.getElementById("pAsk").textContent = T(...a); document.getElementById("pH").textContent = T(...h); document.getElementById("pLead").textContent = T(...l);
+  if (D && places.length) renderHud();
 }
 
 // ---------- pages (hash routing) ----------
@@ -111,6 +165,7 @@ function choose(la, lo, label, opt = {}) {
   render(); loadForecast(places[0]);
   if (p.out) loadWorld(p).then(w => { p.world = w; if (places[0] === p) { render(); if (window.GLOBE) globeMark(); } }).catch(() => { p.world = { error: true }; if (places[0] === p) render(); });
   if (window.GLOBE) globeMark();
+  if (D) renderHud();
   if (!cmp && VIEW === "home" && !opt.quiet) document.getElementById("places").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -242,7 +297,7 @@ const SatLayer = L.GridLayer.extend({
       for (let i = 0; i < a.length; i += 4) {
         const v = a[i + 3] ? SATLUT.get((a[i] << 16) | (a[i + 1] << 8) | a[i + 2]) : undefined;
         if (!v) { a[i + 3] = 0; continue; }
-        const t = v / 100; a[i] = 120 - 100 * t; a[i + 1] = 90 - 30 * t; a[i + 2] = 210 - 50 * t; a[i + 3] = 70 + 180 * t;
+        const t = v / 100; a[i] = 200 + 50 * t; a[i + 1] = 225 + 25 * t; a[i + 2] = 255; a[i + 3] = 50 + 200 * t;   // white snow on the dark map
       }
       g.putImageData(d, 0, 0); done(null, cv);
     };
@@ -258,12 +313,12 @@ function renderSat() {
   const y = tmYear, note = document.getElementById("satNote");
   if (y < 2001) { note.textContent = T(`${y}年の冬はまだ衛星（MODIS、2000年打ち上げ）がありません。2001年以降を選んでください。`, `No MODIS satellite yet in winter ${y} (launched 2000). Pick 2001 or later.`, `${y}년 겨울에는 아직 MODIS 위성이 없습니다(2000년 발사). 2001년 이후를 골라 주세요.`); return; }
   let ym = `${y}-${satMonth}`; if (ym === "2016-02") ym = "2016-01";
-  satLayer = new SatLayer({ time: ym + "-01", maxNativeZoom: 6, maxZoom: 9, opacity: 1, attribution: "NASA GIBS / MODIS" }).addTo(satMap);
-  if (places[0] && places[0].out) { note.textContent = T(`${ym.replace("-", "年")}月の NASA MODIS 月平均の雪（濃い青ほど一か月ずっと雪）。`, `${ym}: NASA MODIS monthly snow cover (darker blue = snow all month).`, `${ym}: NASA MODIS 월평균 눈 덮임 (진한 파랑일수록 한 달 내내 눈).`); return; }
+  satLayer = new SatLayer({ time: ym + "-01", maxNativeZoom: 6, maxZoom: 9, opacity: 1, pane: "overlayPane", attribution: "NASA GIBS / MODIS" }).addTo(satMap);
+  if (places[0] && places[0].out) { note.textContent = T(`${ym.replace("-", "年")}月の NASA MODIS 月平均の雪（白いほど一か月ずっと雪）。`, `${ym}: NASA MODIS monthly snow cover (whiter = snow all month).`, `${ym}: NASA MODIS 월평균 눈 덮임 (하얄수록 한 달 내내 눈).`); return; }
   const k = satMonth === "04" ? "cov_apr" : "cov_feb", i = D.winters.indexOf(y), v = D.hokkaido.series[k][i], last = D.hokkaido.series[k][D.winters.length - 1];
   const m0 = D.hokkaido.series[k].slice(D.winters.indexOf(2001), D.winters.indexOf(2001) + 10);
-  note.textContent = T(`${ym.replace("-", "年")}月：北海道の陸地の${fmt(v, 0)}%が雪（濃い青ほど一か月ずっと雪）。2000年代（2001〜2010年）平均${fmt(mean(m0), 0)}%、最新（2026年）${fmt(last, 0)}%。`,
-    `${ym}: ${fmt(v, 0)}% of Hokkaido's land under snow (darker blue = snow all month). 2000s average (2001–2010) ${fmt(mean(m0), 0)}%, latest (2026) ${fmt(last, 0)}%.`, `${ym.replace("-", "년 ")}월: 홋카이도 땅의 ${fmt(v, 0)}%가 눈 (진한 파랑일수록 한 달 내내 눈). 2000년대(2001~2010년) 평균 ${fmt(mean(m0), 0)}%, 최신(2026년) ${fmt(last, 0)}%.`) + (ym === "2016-01" ? T("（2016年2月は衛星データがないため1月）", " (Feb 2016 missing, January shown)", " (2016년 2월은 위성 자료가 없어 1월로 표시)") : "");
+  note.textContent = T(`${ym.replace("-", "年")}月：北海道の陸地の${fmt(v, 0)}%が雪（白いほど一か月ずっと雪）。2000年代（2001〜2010年）平均${fmt(mean(m0), 0)}%、最新（2026年）${fmt(last, 0)}%。`,
+    `${ym}: ${fmt(v, 0)}% of Hokkaido's land under snow (whiter = snow all month). 2000s average (2001–2010) ${fmt(mean(m0), 0)}%, latest (2026) ${fmt(last, 0)}%.`, `${ym.replace("-", "년 ")}월: 홋카이도 땅의 ${fmt(v, 0)}%가 눈 (하얄수록 한 달 내내 눈). 2000년대(2001~2010년) 평균 ${fmt(mean(m0), 0)}%, 최신(2026년) ${fmt(last, 0)}%.`) + (ym === "2016-01" ? T("（2016年2月は衛星データがないため1月）", " (Feb 2016 missing, January shown)", " (2016년 2월은 위성 자료가 없어 1월로 표시)") : "");
 }
 
 function tipsHTML(p) {
@@ -724,6 +779,8 @@ async function geocode(q) {
 
 async function init() {
   D = await (await fetch("data.json")).json();
+  Chart.defaults.color = "#a3aca2"; Chart.defaults.borderColor = "rgba(255,255,255,.12)";
+  tickClock(); setInterval(tickClock, 1000);
   const tiles = () => L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png", { maxZoom: 14, attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>' });
   map = L.map("map", { scrollWheelZoom: false }).setView([43.4, 142.6], 6); tiles().addTo(map);
   map.on("click", e => choose(e.latlng.lat, e.latlng.lng));
@@ -734,7 +791,7 @@ async function init() {
   document.getElementById("shareBtn").onclick = shareCard;
   document.querySelectorAll("#lang button").forEach(b => (b.onclick = () => { LANG = b.dataset.l; applyLang(); }));
   try { const l = localStorage.getItem("lang"); if (["ja", "en", "ko"].includes(l)) LANG = l; } catch (e) {}
-  drawGrain(); window.addEventListener("resize", () => { clearTimeout(drawGrain.t); drawGrain.t = setTimeout(drawGrain, 200); });
+
   document.getElementById("search").onsubmit = e => { e.preventDefault(); const q = document.getElementById("q").value.trim(); if (q) geocode(q); };
   document.getElementById("gps").onclick = () => navigator.geolocation ? navigator.geolocation.getCurrentPosition(
     p => { const { latitude: la, longitude: lo } = p.coords; choose(la, lo); },
@@ -746,6 +803,7 @@ async function init() {
   // a place can be given in the link: #/karte?p=lat,lon  (handy for sharing a town or a judge's home)
   const qp = (location.hash.match(/[?&]p=(-?[\d.]+),(-?[\d.]+)/) || []);
   if (qp.length) choose(+qp[1], +qp[2], null, { quiet: true }); else choose(QUICK[0][2], QUICK[0][3], null, { q: 0, quiet: true });
+  initGlobe(); renderHud();
   window.addEventListener("hashchange", route);
   document.addEventListener("click", e => { const a = e.target.closest("[data-go]"); if (!a) return; e.preventDefault(); route.go = a.dataset.go; if (VIEW === "home") route(); else location.hash = "#/"; });
   route();
