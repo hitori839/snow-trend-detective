@@ -69,25 +69,28 @@ function initGlobe() {
   try { G = Globe()(el); } catch (e) { el.innerHTML = ""; return; }   // no WebGL: the HUD still works
   G.globeImageUrl(TEX + "earth-blue-marble.jpg").bumpImageUrl(TEX + "earth-topology.png").backgroundColor("rgba(0,0,0,0)")
     .showAtmosphere(true).atmosphereColor("#9cc8ff").atmosphereAltitude(0.16)
-    .onGlobeClick(({ lat, lng }) => choose(lat, lng))
+    .onGlobeClick(({ lat, lng }) => choose(lat, lng, null, { globe: true }))
     // soft glow on the chosen place only: slow, wide, fading aurora-mint rings
     .ringColor(() => t => `rgba(126,240,196,${0.85 * (1 - t) * (1 - t)})`).ringMaxRadius(4.5).ringPropagationSpeed(0.9).ringRepeatPeriod(1600).ringAltitude(0.003)
-    .htmlElementsData([]).htmlElement(d => { const e = document.createElement("div"); e.className = "gdot"; e.title = d.label; return e; });
+    .htmlElementsData([]).htmlElement(d => { const e = document.createElement("div"); e.className = "gmark"; e.innerHTML = `<i class="gdot"></i><span><b>${d.label}</b>${d.ic ? `<small>${T("明日", "Tomorrow", "내일")} ${d.ic}</small>` : ""}</span>`; return e; });
   const size = () => G.width(el.clientWidth).height(el.clientHeight);
   size(); window.addEventListener("resize", size);
   const ctl = G.controls(); ctl.autoRotate = true; ctl.autoRotateSpeed = 0.45; ctl.enableZoom = true; ctl.minDistance = 140; ctl.maxDistance = 600;
   G.pointOfView({ lat: 25, lng: 120, altitude: 2.5 });
-  setTimeout(() => { ctl.autoRotate = false; G.pointOfView({ lat: 41.5, lng: 142.5, altitude: 1.25 }, 2600); }, 1600);
+  setTimeout(() => { ctl.autoRotate = false; G.pointOfView({ lat: (places[0] ? places[0].la : 43) - 0.6, lng: places[0] ? places[0].lo : 142.6, altitude: 0.8 }, 2600); }, 1600);
   el.addEventListener("pointerdown", () => (ctl.autoRotate = false));
-  window.GLOBE = G; globeMark();
+  window.GLOBE = G; globeMark(); snowTexture(G);
 }
 function globeMark() {
   if (!window.GLOBE) return;
   window.GLOBE.ringsData(places.map(q => ({ lat: q.la, lng: q.lo })));
-  window.GLOBE.htmlElementsData(places.map(q => ({ lat: q.la, lng: q.lo, label: placeLabel(q) })));
+  renderPlacePanel();
 }
 function renderHud() {
   const hp = document.getElementById("hudPlace"); if (hp && places[0]) hp.textContent = placeLabel(places[0]);
+  renderPlacePanel();
+  if (VIEW === "home" && places[0]) { const [q, hh] = placeHeadline(places[0]); document.getElementById("sideAsk").textContent = q; document.getElementById("sideH").textContent = hh; }
+  return;
   const C = D.cause, F = D.field, st = D.stations, slr = st.map(x => x.trend.slr).filter(Boolean);
   const rows = [
     [T("重い雪の日（気象庁）", "Heavy-snow days (JMA)", "무거운 눈의 날 (기상청)"), `${st.filter(x => x.trend.heavy && x.trend.heavy.slope10 > 0).length}/${st.length} ↑`],
@@ -105,6 +108,112 @@ function renderHud() {
   document.getElementById("hudWave").innerHTML = `<polyline points="${pts}" fill="none" stroke="#7ef0c4" stroke-width="1.4"/><line x1="0" y1="40" x2="200" y2="40" stroke="rgba(255,255,255,.2)"/>`;
   document.getElementById("hudBr").innerHTML = `${T("冬の平均気温", "Winter mean temperature", "겨울 평균기온")}<br><b>${fmt(mean(C.hok_temp.slice(0, 10)), 1)} → ${fmt(mean(C.hok_temp.slice(-10)), 1)} °C</b>`;
 }
+
+// ---------- globe texture: NASA Blue Marble + NASA MODIS snow cover (latest February), painted white ----------
+async function snowTexture(G) {
+  if (!SATLUT) return;
+  const W = 2560, H = 1280, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
+  const load = src => new Promise((res, rej) => { const i = new Image(); i.crossOrigin = "anonymous"; i.onload = () => res(i); i.onerror = rej; i.src = src; });
+  try {
+    g.drawImage(await load(TEX + "earth-blue-marble.jpg"), 0, 0, W, H);
+    const sc = document.createElement("canvas"); sc.width = W; sc.height = 1536; const sg = sc.getContext("2d");
+    const jobs = [];
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++)
+      jobs.push(load(`https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/MODIS_Terra_L3_Snow_Cover_Monthly_Average_Pct/default/2026-02-01/2km/2/${r}/${c}.png`).then(im => sg.drawImage(im, c * 512, r * 512)).catch(() => {}));
+    await Promise.all(jobs);
+    const d = sg.getImageData(0, 0, W, H), a = d.data;
+    for (let i = 0; i < a.length; i += 4) {
+      const v = a[i + 3] ? SATLUT.get((a[i] << 16) | (a[i + 1] << 8) | a[i + 2]) : 0;
+      if (!v) { a[i + 3] = 0; continue; }
+      const t = v / 100; a[i] = 236; a[i + 1] = 244; a[i + 2] = 255; a[i + 3] = 70 + 175 * t;
+    }
+    sg.putImageData(d, 0, 0); g.drawImage(sc, 0, 0, W, H, 0, 0, W, H);
+    G.globeImageUrl(cv.toDataURL("image/jpeg", 0.88));
+  } catch (e) { /* keep the plain Blue Marble */ }
+}
+
+// ---------- headline for the chosen place ----------
+function placeHeadline(p) {
+  const name = placeLabel(p).split(" · ")[0];
+  if (p.out) {
+    const W = p.world;
+    if (!W) return [T(`${name}の軽い雪は、重い雪に変わりつつあるのか？`, `Is ${name}'s light snow turning heavy?`, `${name}의 가벼운 눈은 무거운 눈으로 바뀌고 있을까?`), T(`${name}の35年を、NASAのデータで計算中…`, `Computing 35 winters for ${name} from NASA data…`, `${name}의 35년을 NASA 자료로 계산 중…`)];
+    if (W.error) return [T("世界モード", "World mode", "세계 모드"), T(`${name}：データを取得できませんでした。`, `${name}: data unavailable.`, `${name}: 데이터를 가져오지 못했습니다.`)];
+    const hv = W.trend.heavy, ok = hv && hv.p < 0.1;
+    const h = W.snowy < 3 ? T(`${name}は、雪がほとんど降らない場所。`, `${name} rarely sees snow.`, `${name}은 눈이 거의 내리지 않는 곳.`)
+      : hv && hv.slope10 > 0 && ok ? T(`${name}の雪も、重くなる方向に動いている。`, `${name}'s snow is turning heavier too.`, `${name}의 눈도 무거워지는 쪽으로 움직이고 있다.`)
+      : T(`${name}の雪は、まだはっきり変わっていない。`, `${name}'s snow has not clearly changed yet.`, `${name}의 눈은 아직 뚜렷하게 바뀌지 않았다.`);
+    return [T(`${name}の軽い雪は、重い雪に変わりつつあるのか？`, `Is ${name}'s light snow turning heavy?`, `${name}의 가벼운 눈은 무거운 눈으로 바뀌고 있을까?`), h];
+  }
+  const near = p.dist <= 40, t = (near ? p.st.trend.heavy : p.cell.trend.heavy) || { slope10: 0 };
+  return [T(`${name}の軽い雪は、重い雪に変わりつつあるのか？`, `Is ${name}'s light snow turning heavy?`, `${name}의 가벼운 눈은 무거운 눈으로 바뀌고 있을까?`),
+    t.slope10 > 0 ? T(`${name}の雪は、重くなる方向に動いている。`, `${name}'s snow is moving toward heavier snow.`, `${name}의 눈은 무거워지는 쪽으로 움직이고 있다.`)
+                  : T(`${name}の雪は、北海道全体ほどはっきり変わっていない。`, `${name}'s snow has changed less clearly than Hokkaido as a whole.`, `${name}의 눈은 홋카이도 전체만큼 뚜렷하게 바뀌지 않았다.`)];
+}
+
+// ---------- snowpack seen from the side: 1990s vs 2020s ----------
+function profileHTML(p) {
+  let S, dA = null, dB = null;
+  if (p.out) { if (!p.world || p.world.error) return `<div class="loading"><span class="spin"></span>${T("計算中…", "Computing…", "계산 중…")}</div>`; S = p.world.series; }
+  else { S = (p.dist <= 40 ? p.st : p.cell).series; dA = mean(p.st.series.maxdepth.slice(0, 10)); dB = mean(p.st.series.maxdepth.slice(-10)); }
+  const part = f => ({ sd: mean(f(S.snow_days)) || 0, li: mean(f(S.powder)) || 0, hv: mean(f(S.heavy)) || 0, ic: mean(f(S.icy)) || 0 });
+  const A = part(x => x.slice(0, 10)), B = part(x => x.slice(-10));
+  const maxD = Math.max(dA || 0, dB || 0), Hc = 104, base = 132;
+  const col = (P, d, x, lab) => {
+    const h = maxD ? Math.max(18, (d / maxD) * Hc) : 78, top = base - h, sd = Math.max(1, P.sd);
+    const fh = h * Math.min(1, P.hv / sd), fl = h * Math.min(1, P.li / sd), fo = Math.max(0, h - fh - fl);
+    let y = base, out = "";
+    out += `<rect x="${x}" y="${y - fh}" width="74" height="${fh}" fill="#b39dff" opacity=".9"/>`; y -= fh;
+    out += `<rect x="${x}" y="${y - fo}" width="74" height="${fo}" fill="#7f93b6" opacity=".55"/>`; y -= fo;
+    out += `<rect x="${x}" y="${y - fl}" width="74" height="${fl}" fill="#eaf6ff"/>`;
+    const n = Math.min(8, Math.round(P.ic / 8));
+    for (let k = 1; k <= n; k++) { const yy = base - (h * k) / (n + 1); out += `<rect x="${x}" y="${yy - 1}" width="74" height="2.2" fill="#5fe3ff"/>`; }
+    out += `<text x="${x + 37}" y="${top - 6}" text-anchor="middle" font-size="12" font-weight="700" fill="#eaf2ff">${d != null ? fmt(d, 0) + "cm" : ""}</text>`;
+    out += `<text x="${x + 37}" y="${base + 16}" text-anchor="middle" font-size="11" fill="#a9b8d0">${lab}</text>`;
+    return out;
+  };
+  const pc = (a, b) => (b ? Math.round((100 * a) / b) : 0);
+  return `<svg viewBox="0 0 250 152" class="profile" role="img" aria-label="snowpack profile">
+      <rect x="0" y="${base}" width="250" height="4" fill="#6b5a45"/><rect x="0" y="${base + 4}" width="250" height="16" fill="#3b2f25" opacity=".6"/>
+      ${col(A, dA, 28, T("1990年代", "1990s", "1990년대"))}${col(B, dB, 148, T("2020年代", "2020s", "2020년대"))}
+      <text x="125" y="70" text-anchor="middle" font-size="20" fill="#7ef0c4">→</text></svg>
+    <div class="pf-leg"><span><i style="background:#eaf6ff"></i>${T("軽い雪", "light", "가벼운 눈")} ${pc(A.li, A.sd)}→${pc(B.li, B.sd)}%</span><span><i style="background:#b39dff"></i>${T("重い雪", "heavy", "무거운 눈")} ${pc(A.hv, A.sd)}→${pc(B.hv, B.sd)}%</span><span><i style="background:#5fe3ff;height:3px"></i>${T("氷の層", "ice layers", "얼음층")} ${Math.round(A.ic / 8)}→${Math.round(B.ic / 8)}</span></div>
+    <p class="pf-note">${T("雪の日を軽い雪・重い雪の割合で積み、つるつる路面の日（約8日ごと）を氷の層として描いた断面のイメージです。", "Snowpack sketch: snow days stacked by share of light and heavy snow; icy days drawn as ice layers (one per ~8 days).", "눈 온 날을 가벼운 눈·무거운 눈 비율로 쌓고, 빙판길 날(약 8일마다)을 얼음층으로 그린 단면 이미지입니다.")}${p.out ? T("（北海道の外は積雪深の記録がないため高さは同じ）", " (no snow-depth record outside Hokkaido, so equal heights)", " (홋카이도 밖은 적설 기록이 없어 높이는 같음)") : ""}</p>`;
+}
+
+
+function renderPlacePanel() {
+  const p = places[0]; if (!p || !D) return;
+  document.getElementById("hpTitle").textContent = T("この場所 · ", "This place · ", "이 장소 · ") + placeLabel(p).split(" · ")[0];
+  document.getElementById("hpProfile").innerHTML = profileHTML(p);
+  let rows = [];
+  if (p.out) {
+    const W = p.world;
+    if (W && !W.error) {
+      const r = (k, ja, en, ko, u, d) => { const s = W.series[k]; return [T(ja, en, ko), `${fmt(mean(s.slice(0, 10)), d)} → ${fmt(mean(s.slice(-10)), d)}${u}`]; };
+      rows = [r("heavy", "重い雪の日", "Heavy-snow days", "무거운 눈의 날", "", 0), r("powder", "軽い雪の日", "Light-snow days", "가벼운 눈의 날", "", 0), r("icy", "つるつる路面の日", "Icy-road days", "빙판길 날", "", 0), r("tmean", "冬の平均気温", "Winter mean temp.", "겨울 평균기온", "℃", 1)];
+    }
+  } else {
+    const S = (p.dist <= 40 ? p.st : p.cell).series, st = p.st.series, sl = mean(st.slr.filter(x => x != null).slice(0, 10)), sl2 = mean(st.slr.slice(-10));
+    const r = (s, ja, en, ko, d = 0) => [T(ja, en, ko), `${fmt(mean(s.slice(0, 10)), d)} → ${fmt(mean(s.slice(-10)), d)}`];
+    rows = [r(S.heavy, "重い雪の日", "Heavy-snow days", "무거운 눈의 날"), r(S.powder, "軽い雪の日", "Light-snow days", "가벼운 눈의 날"), r(S.icy, "つるつる路面の日", "Icy-road days", "빙판길 날"),
+      [T("屋根の新雪1mの重さ", "Roof load, 1 m new snow", "지붕 새 눈 1m 무게"), sl && sl2 ? `${fmt(100 / sl, 0)} → ${fmt(100 / sl2, 0)} kg/m²` : "–"]];
+  }
+  document.getElementById("hudStats").innerHTML = rows.map(([a, b]) => `<li><span>${a}</span><b>${b}</b></li>`).join("");
+  // next 7 days as icons
+  let fc = "";
+  if (FC && !FC.error && FC.time) fc = FC.time.map((t, i) => { const c = fcClass(FC, i), w = c.find(x => x[0] === "warn") || c[0]; return `<span class="${w[0]}" title="${w[2]}"><i>${w[1] === "·" ? "–" : w[1]}</i><small>${new Date(t + "T00:00:00").getDate()}</small></span>`; }).join("");
+  document.getElementById("hpFc").innerHTML = fc ? `<p class="k">${T("この先7日", "Next 7 days", "앞으로 7일")}</p><div>${fc}</div>` : "";
+  const C = D.cause;
+  document.getElementById("hpHok").innerHTML = T(`北海道全体：重い雪 10/10↑ · 雪が重く 9/10 · 気温+水分 ${fmt(C.explained_share_tp * 100, 0)}%`, `All Hokkaido: heavy snow 10/10↑ · heavier snow 9/10 · warming+moisture ${fmt(C.explained_share_tp * 100, 0)}%`, `홋카이도 전체: 무거운 눈 10/10↑ · 눈이 무거워짐 9/10 · 기온+수분 ${fmt(C.explained_share_tp * 100, 0)}%`);
+  // label + forecast icon on the globe
+  if (window.GLOBE) {
+    let ic = "";
+    if (FC && !FC.error && FC.time) { const c = fcClass(FC, Math.min(1, FC.time.length - 1)); const w = c.find(x => x[0] === "warn") || c[0]; ic = w[1] === "·" ? "" : `${w[1]} ${w[2]}`; }
+    window.GLOBE.htmlElementsData([{ lat: p.la, lng: p.lo, label: placeLabel(p).split(" · ")[0], ic }]);
+  }
+}
+
 function tickClock() { const c = document.getElementById("clock"); if (c) c.textContent = new Date().toISOString().slice(11, 19) + " UTC"; }
 
 function renderSide() {
@@ -115,6 +224,7 @@ function renderSide() {
   document.getElementById("pAsk").textContent = T(...a); document.getElementById("pH").textContent = T(...h); document.getElementById("pLead").textContent = T(...l);
   if (D && places.length) renderHud();
 }
+
 
 // ---------- pages (hash routing) ----------
 function route() {
@@ -165,13 +275,13 @@ function choose(la, lo, label, opt = {}) {
   markers.forEach(m => map.removeLayer(m));
   markers = places.map((q, i) => L.circleMarker([q.la, q.lo], { radius: 9, color: i ? css("--heavy") : css("--blue"), weight: 3, fillOpacity: .3 }).addTo(map).bindTooltip(placeLabel(q)));
   render(); loadForecast(places[0]);
-  if (p.out) loadWorld(p).then(w => { p.world = w; if (places[0] === p) { render(); if (window.GLOBE) globeMark(); } }).catch(() => { p.world = { error: true }; if (places[0] === p) render(); });
+  if (p.out) loadWorld(p).then(w => { p.world = w; if (places[0] === p) { render(); renderHud(); } }).catch(() => { p.world = { error: true }; if (places[0] === p) render(); });
   if (window.GLOBE) globeMark();
   if (D) renderHud();
   // bring the map and the globe to the chosen place
   if (map && !map.getBounds().pad(-0.1).contains([la, lo])) map.flyTo([la, lo], p.out ? 6 : Math.max(map.getZoom(), 7), { duration: 0.8 });
-  if (window.GLOBE && !opt.quiet) window.GLOBE.pointOfView({ lat: la - 1.5, lng: lo, altitude: 1.3 }, 1400);
-  if (!cmp && VIEW === "home" && !opt.quiet) document.getElementById("places").scrollIntoView({ behavior: "smooth", block: "start" });
+  if (window.GLOBE && (!opt.quiet || opt.globe)) window.GLOBE.pointOfView({ lat: la - 0.6, lng: lo, altitude: 0.62 }, 1500);
+  if (!cmp && VIEW === "home" && !opt.quiet && !opt.globe) document.getElementById("places").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function verdict(g, n) {
@@ -691,7 +801,7 @@ function fcClass(d, i) {
   return out;
 }
 function renderForecast() {
-  renderSummary(); setTimeout(() => { if (TL === 35) tlFrame(); }, 0);
+  renderSummary(); if (D) renderPlacePanel(); setTimeout(() => { if (TL === 35) tlFrame(); }, 0);
   const el = document.getElementById("fc"), note = document.getElementById("fcNote");
   if (!FC) { el.innerHTML = `<p class="note">${T("予報を読みこみ中…", "Loading forecast…", "예보 불러오는 중…")}</p>`; note.textContent = ""; return; }
   if (FC.error) { el.innerHTML = `<p class="note">${T("予報を読みこめませんでした", "Could not load the forecast", "예보를 불러오지 못했습니다")} <button class="chip" id="fcRetry">${T("もう一度", "Try again", "다시 불러오기")}</button></p>`;

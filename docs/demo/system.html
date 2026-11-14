@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>わが街の雪質カルテ — システム設計図</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;700;800&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b1628;--card:rgba(150,180,230,.07);--ink:#eaf2ff;--muted:#a9b8d0;--faint:#71809c;--line:rgba(160,190,255,.22);--mint:#7ef0c4;--violet:#b39dff;--ice:#9ad7ff;--warn:#ffd166}
+  *{box-sizing:border-box}
+  body{margin:0;width:1800px;height:1012px;background:radial-gradient(ellipse at 10% 0%,rgba(126,240,196,.12),transparent 40%),radial-gradient(ellipse at 95% 5%,rgba(179,157,255,.13),transparent 40%),var(--bg);color:var(--ink);font-family:"Noto Sans JP","Inter Tight",sans-serif;padding:34px 40px}
+  h1{margin:0;font-size:40px;font-weight:800;letter-spacing:-.01em}
+  h1 span{color:var(--mint)}
+  .sub{color:var(--muted);font-size:17px;margin:6px 0 0}
+  .badge{position:absolute;top:40px;right:40px;border:1px solid rgba(126,240,196,.5);color:var(--mint);border-radius:999px;padding:7px 16px;font-size:15px;background:rgba(126,240,196,.08)}
+  .cols{display:grid;grid-template-columns:1fr 46px 1fr 46px 1.12fr;margin-top:24px;align-items:start}
+  .head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .num{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:700 16px "Inter Tight";color:#0b1628}
+  .head b{font-size:22px} .head small{display:block;color:var(--faint);font-size:12.5px;font-family:"IBM Plex Mono",monospace;letter-spacing:.04em}
+  .c{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:11px 14px;margin-bottom:9px}
+  .c b{font-size:16px}
+  .c p{margin:4px 0 0;color:var(--muted);font-size:13.5px;line-height:1.5}
+  .c .to{color:var(--mint)} .c.v .to{color:var(--violet)}
+  .tag{float:right;font:600 11px "IBM Plex Mono",monospace;border-radius:999px;padding:2px 8px;border:1px solid var(--line);color:var(--muted)}
+  .tag.n{color:#0b1628;background:var(--ice);border-color:var(--ice)} .tag.j{color:#0b1628;background:var(--violet);border-color:var(--violet)}
+  .arrow{display:grid;place-items:center;height:640px;color:var(--mint);font-size:30px}
+  .mono{font-family:"IBM Plex Mono",monospace;color:var(--mint);font-size:14.5px;font-weight:600}
+  .stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+  .stat div{border:1px solid var(--line);border-radius:8px;padding:6px 8px;text-align:center;background:rgba(0,0,0,.2)}
+  .stat b{display:block;font:600 19px "IBM Plex Mono";color:var(--violet)} .stat span{font-size:11.5px;color:var(--muted)}
+  .bottom{display:grid;grid-template-columns:1.3fr 1fr .9fr;gap:14px;margin-top:6px}
+  .bottom .c{margin:0;padding:12px 16px}
+  .k{font:600 12px "IBM Plex Mono",monospace;letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+  .ok{color:var(--mint);font-size:14px;line-height:1.75}
+  .legend{margin-top:10px;color:var(--faint);font-size:12.5px;font-family:"IBM Plex Mono",monospace}
+</style>
+</head>
+<body>
+<h1>わが街の雪質カルテ <span>—</span> システム設計図</h1>
+<p class="sub">NASA Space Apps Challenge 2026 · Be An Earth System Trend Detective · 札幌（韓国からオンライン参加）· Team Snow Trend Detective</p>
+<div class="badge">静的サイト ／ サーバー不要 ／ GitHub Pages ／ 日本語・English・한국어</div>
+
+<div class="cols">
+  <!-- 1 data -->
+  <div>
+    <div class="head"><div class="num" style="background:var(--ice)">1</div><div><b>入力データ</b><small>Data sources · 1992–2026の35冬</small></div></div>
+    <div class="c"><span class="tag n">NASA</span><b>NASA POWER（MERRA-2）日別</b><p>気温・降雪・降水・風　北海道43マス／観測所10点／世界178点<br><span class="to">→ 軽い雪・重い雪・つるつる路面の日</span></p></div>
+    <div class="c"><span class="tag n">NASA</span><b>NASA MODIS 月平均の雪（GIBS）</b><p>地図タイルの色を公式カラーマップで％に戻す<br><span class="to">→ 4月・12月の雪のおおわれ方</span></p></div>
+    <div class="c v"><span class="tag j">JAXA</span><b>JAXA GSMaP 衛星降水（日別・月別）</b><p>JAXA Earth API（jaxa-earth）<br><span class="to">→ 重い大雪の日・水1mmで積もる雪（雪の重さ）</span></p></div>
+    <div class="c"><b>気象庁 過去の気象データ 10観測所</b><p>降雪・最深積雪・気温・風速の日別値<br><span class="to">→ 地上での確かめ・積雪の深さ</span></p></div>
+    <div class="c"><b>札幌市消防局 転倒搬送／国の報告書</b><p>「日本の気候変動2025」（文科省・気象庁）<br><span class="to">→ 影響と答え合わせ</span></p></div>
+  </div>
+  <div class="arrow">➜</div>
+
+  <!-- 2 pipeline -->
+  <div>
+    <div class="head"><div class="num" style="background:var(--violet)">2</div><div><b>解析パイプライン</b><small>Python · scripts/ · 事前に実行</small></div></div>
+    <div class="c"><div class="mono">fetch_*.py</div><p>POWER・気象庁・JAXA（日別は実際の撮影日で対応）・MODIS・世界格子を取得</p></div>
+    <div class="c"><div class="mono">analyze.py ─ 冬ごとの指標</div><p>雪の日のうち 平均 −5℃以下＝軽い雪、−2℃より暖かい＝重い雪／最高0℃超・最低0℃未満＝つるつる／降雪÷降水＝雪の重さ</p></div>
+    <div class="c"><div class="mono">確かめ（Validity）</div><p>マン・ケンドール＋セン傾き／多重比較の補正（FDR）／冬の順番を500回シャッフル／基準を −3〜0℃ に変えても同じか</p></div>
+    <div class="c"><div class="mono">原因と場所</div><p>気温・降水で回帰 → 説明できる割合／冬の平均気温ごとの変化（北海道・世界）</p>
+      <div class="stat"><div><b>10/10</b><span>重い雪↑</span></div><div><b>9/10</b><span>雪が重く</span></div><div><b>66%</b><span>気温+水分</span></div></div></div>
+    <div class="c"><div class="mono">docs/ data.json · world.json · data/*.csv</div><p>アプリが読む結果と、市・研究者向けの公開データ</p></div>
+  </div>
+  <div class="arrow">➜</div>
+
+  <!-- 3 app -->
+  <div>
+    <div class="head"><div class="num" style="background:var(--mint)">3</div><div><b>Webアプリ（スマホ対応）</b><small>HTML · CSS · JavaScript · globe.gl · Leaflet · Chart.js</small></div></div>
+    <div class="c"><b>ホーム：3D地球儀（NASA Blue Marble）＋HUD</b><p>どこでもクリック・現在地・世界中の地名検索（日英韓） → その場所の答えと根拠</p></div>
+    <div class="c"><b>世界モード</b><p>北海道の外は NASA POWER をブラウザで直接取得し、同じ決まり・同じ検定で35冬を計算</p></div>
+    <div class="c"><b>雪質カルテ</b><p>北海道全体の判定 → この街の数字 → 「だから」何をするか（屋根の雪の重さ 55→64 kg/m² など）</p></div>
+    <div class="c"><b>雪の年表</b><p>1992（観測）→ この先7日（予報・⚠️転倒注意）→ 2050（今の傾きの推定、予報ではない）</p></div>
+    <div class="c"><b>なぜ・どこで ／ 公開データ</b><p>原因の分解、次に変わりやすい場所、世界178地点 ／ CSV・JSONダウンロード</p></div>
+  </div>
+</div>
+
+<div class="bottom">
+  <div class="c"><div class="k">実装済み</div><div class="ok">✔ 35冬の解析と検定　✔ 雪の重さの直接測定　✔ 原因の分解（66%）　✔ 世界モード<br>✔ 7日の雪質予報　✔ 雪の年表　✔ 市向けデータ　✔ 3言語・スマホ・インストール　✔ 英語スライド7枚</div></div>
+  <div class="c"><div class="k">これから（11/15 提出まで）</div><p style="font-size:14px">メイン画面の改善（選んだ場所の雪の様子を地球儀の上で見せる）／発表の練習／提出ページの仕上げ</p></div>
+  <div class="c"><div class="k">位置づけ</div><p style="font-size:14px">「確か」は独立したデータがそろったときだけ。2050年の値は予報ではなく、今の傾きをのばした目安です。</p></div>
+</div>
+<div class="legend">データ：NASA POWER · NASA MODIS (GIBS) · NASA Blue Marble · JAXA GSMaP · 気象庁 · 札幌市消防局 · Open-Meteo　｜　コードの多くはAI（Claude）の支援で作成</div>
+</body>
+</html>
