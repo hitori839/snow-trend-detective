@@ -3,6 +3,18 @@ let fallChart = null, FC = null, fcKey = "";
 let satMap, satLayer, satMonth = "04", SATLUT = null;
 let LANG = "ja", D = null, map, map2, layer2, markers = [], places = [], chartRefs = [], tmYear = 2024, layerKey = "heavy";
 const T = (ja, en, ko) => (LANG === "ja" ? ja : LANG === "ko" ? (ko ?? en) : en);
+const SIDE = {
+  home: [["北海道のパウダースノーは、重い雪に変わりつつあるのか？", "Is Hokkaido's powder snow turning into heavy snow?", "홋카이도의 파우더 스노는 무거운 눈으로 바뀌고 있을까?"],
+    ["北海道の雪は、重くなる方向に動いている。", "Hokkaido's snow is moving toward heavier snow.", "홋카이도의 눈은 무거워지는 쪽으로 움직이고 있다."],
+    ["35回の冬（1992〜2026年）の雪の日を一日ずつ数え、NASA・JAXA・気象庁のデータがそろったときだけ「確か」と言う、街ごとの雪質カルテ。", "We counted every snow day of 35 winters (1992–2026) and only say “certain” when NASA, JAXA and JMA data agree — a snow-quality chart for your town.", "35번의 겨울(1992~2026년) 동안 눈 온 날을 하루씩 세고, NASA·JAXA·기상청 자료가 맞아떨어질 때만 「확실」이라고 말하는 동네별 눈 품질 카르테."]],
+  karte: [["雪質カルテ", "Snow-quality chart", "눈 품질 카르테"], ["あなたの街の、雪の35年。", "Your town's 35 winters of snow.", "우리 동네 눈의 35년."],
+    ["パウダー・重い雪・つるつる路面・春の雪・大雪。6つの目で、雪がどう変わったかを見ます。", "Powder, heavy snow, icy roads, spring snow and big storms — six ways to see how the snow changed.", "파우더·무거운 눈·빙판길·봄 눈·폭설. 여섯 가지 눈으로 눈이 어떻게 바뀌었는지 봅니다."]],
+  future: [["未来をのぞく", "A look at 2050", "미래 엿보기"], ["このままなら、2050年。", "If nothing changes: 2050.", "이대로라면, 2050년."],
+    ["今の傾きをそのままのばすと、2050年の冬はどうなるか。予報ではなく、今の変化の大きさを感じるための目安です。", "What winter 2050 looks like if today's trend simply continues — not a forecast, a way to feel the size of today's change.", "지금 기울기를 그대로 늘리면 2050년 겨울은 어떻게 될까. 예보가 아니라 지금 변화의 크기를 느끼기 위한 기준입니다."]],
+  time: [["冬のタイムマシン", "Winter time machine", "겨울 타임머신"], ["あの冬に、もどる。", "Back to that winter.", "그 겨울로, 돌아가기."],
+    ["年をえらぶと、その冬いちばん積もった雪が体のどこまで来たか、いちばん寒い朝の体感、宇宙から見た北海道の雪がわかります。", "Pick a year: how deep the snow got against your body, the coldest morning's feels-like, and Hokkaido's snow from space.", "해를 고르면 그 겨울 가장 많이 쌓인 눈이 몸 어디까지 왔는지, 가장 추운 아침의 체감, 우주에서 본 홋카이도의 눈을 알 수 있습니다."]],
+};
+let VIEW = "home";
 const STKO = { Sapporo: "삿포로", Asahikawa: "아사히카와", Obihiro: "오비히로", Kushiro: "구시로", Hakodate: "하코다테", Wakkanai: "왓카나이", Abashiri: "아바시리", Muroran: "무로란", "Kutchan (Niseko)": "굿찬 (니세코)", Iwamizawa: "이와미자와" };
 const KEYS = {
   powder: { icon: "❄️", ja: "パウダーの日", en: "Powder days", sub_ja: "雪の日のうち、日平均気温 −5℃以下（軽く乾いた雪）", sub_en: "Snow days with daily mean ≤ −5 °C (light, dry snow)", ko: "파우더의 날", sub_ko: "눈 온 날 중 일평균 기온 −5℃ 이하 (가볍고 마른 눈)", unit_ko: "일", unit: "日", unit_en: "days", color: "--powder" },
@@ -28,25 +40,66 @@ function applyLang() {
   document.querySelectorAll("#lang button").forEach(b => b.classList.toggle("on", b.dataset.l === LANG));
   try { localStorage.setItem("lang", LANG); } catch (e) {}
   document.getElementById("quick").innerHTML = QUICK.map((q, i) => `<button class="chip" data-i="${i}">${T(q[0], q[1], q[4])}</button>`).join("");
-  document.querySelectorAll("#quick .chip").forEach(b => (b.onclick = () => { const q = QUICK[+b.dataset.i]; choose(q[2], q[3], T(q[0], q[1], q[4])); }));
+  document.querySelectorAll("#quick .chip").forEach(b => (b.onclick = () => { const q = QUICK[+b.dataset.i]; choose(q[2], q[3], null, { q: +b.dataset.i }); }));
+  renderSide();
   renderAbout(); renderFacts(); renderFalls(); renderLayerChips(); drawMap2();
+  places.forEach(q => q.geo && !q.geo[LANG] && reverseName(q));
   if (places.length) { render(); renderForecast(); }
+}
+function renderSide() {
+  const [a, h, l] = SIDE[VIEW] || SIDE.home;
+  document.getElementById("sideAsk").textContent = T(...a);
+  document.getElementById("sideH").textContent = T(...h);
+  document.getElementById("sideLead").textContent = T(...l);
+}
+
+// ---------- pages (hash routing) ----------
+function route() {
+  const v = (location.hash.match(/^#\/(\w+)/) || [])[1];
+  VIEW = SIDE[v] ? v : "home";
+  document.body.dataset.view = VIEW;
+  document.querySelectorAll(".view").forEach(e => (e.hidden = e.dataset.view !== VIEW));
+  document.querySelectorAll(".navlinks a").forEach(a => a.classList.toggle("on", a.dataset.v === VIEW));
+  renderSide();
+  if (!places.length) return;
+  render();
+  [map, map2, satMap].forEach(m => m && m.invalidateSize());
+  if (VIEW === "home") renderFalls();
+  const go = route.go; route.go = null;
+  if (go) setTimeout(() => document.getElementById(go).scrollIntoView({ behavior: "smooth", block: "start" }), 30);
+  else window.scrollTo(0, 0);
+}
+
+// ---------- place names: BigDataCloud client reverse geocoding (city · region · country) ----------
+async function reverseName(p) {
+  const lang = LANG; p.geo = p.geo || {};
+  try {
+    const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${p.la}&longitude=${p.lo}&localityLanguage=${lang}`);
+    const j = await r.json();
+    p.geo[lang] = j.countryName ? [j.city || j.locality, j.principalSubdivision, j.countryName].filter(Boolean).filter((x, i, arr) => arr.indexOf(x) === i).join(" · ")
+      : (j.locality || T("海の上", "At sea", "바다 위")) + ` (${p.la.toFixed(2)}, ${p.lo.toFixed(2)})`;
+  } catch (e) { p.geo[lang] = `${p.la.toFixed(2)}, ${p.lo.toFixed(2)}`; }
+  if (places.includes(p)) { renderPlaces(); renderEntries(places[0]); markers.forEach((m, i) => m.setTooltipContent(placeLabel(places[i]))); }
+}
+function placeLabel(p) {
+  if (p.q != null) { const q = QUICK[p.q]; return T(q[0], q[1], q[4]); }
+  if (p.geo) return p.geo[LANG] || Object.values(p.geo)[0] || T("地名を読みこみ中…", "Finding place name…", "지명 불러오는 중…");
+  return p.label;
 }
 
 function nearestCell(la, lo) { return D.cells.reduce((b, c) => (km(la, lo, c.lat, c.lon) < km(la, lo, b.lat, b.lon) ? c : b)); }
 function nearestStation(la, lo) { return D.stations.reduce((b, s) => (km(la, lo, s.lat, s.lon) < km(la, lo, b.lat, b.lon) ? s : b)); }
 
-function choose(la, lo, label) {
+function choose(la, lo, label, opt = {}) {
   const cmp = document.getElementById("cmpOn").checked;
-  const st = nearestStation(la, lo);
-  const p = { la, lo, label: label || `${la.toFixed(2)}, ${lo.toFixed(2)}`, cell: nearestCell(la, lo), st, dist: km(la, lo, st.lat, st.lon) };
+  const st = nearestStation(la, lo), cell = nearestCell(la, lo);
+  const p = { la, lo, label, q: opt.q, cell, st, dist: km(la, lo, st.lat, st.lon), out: km(la, lo, cell.lat, cell.lon) > 45 };
+  if (label == null && opt.q == null) { p.geo = {}; reverseName(p); }
   if (cmp && places.length >= 1) places = [places[0], p]; else places = [p];
   markers.forEach(m => map.removeLayer(m));
-  markers = places.map((q, i) => L.circleMarker([q.la, q.lo], { radius: 9, color: i ? css("--heavy") : css("--blue"), weight: 3, fillOpacity: .3 }).addTo(map).bindTooltip(q.label));
+  markers = places.map((q, i) => L.circleMarker([q.la, q.lo], { radius: 9, color: i ? css("--heavy") : css("--blue"), weight: 3, fillOpacity: .3 }).addTo(map).bindTooltip(placeLabel(q)));
   render(); loadForecast(places[0]);
-  document.getElementById("result").hidden = false;
-  if (satMap) satMap.invalidateSize();
-  if (!cmp) document.getElementById("places").scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!cmp && VIEW === "home" && !opt.quiet) document.getElementById("places").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function verdict(g, n) {
@@ -73,7 +126,7 @@ function satCardHTML(k, p, idx) {
   return `<div class="card kc"><h3>${K.icon} ${T(K.ja, K.en, K.ko)}</h3><div class="sub">${T(K.sub_ja, K.sub_en, K.sub_ko)}</div>
   <div class="nums"><span>${T("2000年代", "2000s", "2000년대")} <b class="big">${fmt(a, K.stOnly ? 1 : 0)}</b>${u}</span><span>→ ${T("2020年代", "2020s", "2020년대")} <b class="big">${fmt(b, K.stOnly ? 1 : 0)}</b>${u}</span>
   <span class="arrow">${arrow} ${tr ? fmt(tr.slope10) : "–"}${K.stOnly ? u : T("ポイント", " pts", "%p")}/${T("10年", "decade", "10년")}</span></div>
-  <canvas id="c${idx}"></canvas><span class="badge ${cls}">${txt}</span>
+  <div class="cbox"><canvas id="c${idx}"></canvas></div><span class="badge ${cls}">${txt}</span>
   <div class="cmpline">${foot}</div></div>`;
 }
 function stormUp() {
@@ -93,7 +146,7 @@ function cardHTML(k, p, idx) {
   return `<div class="card kc"><h3>${K.icon} ${T(K.ja, K.en, K.ko)}</h3><div class="sub">${T(K.sub_ja, K.sub_en, K.sub_ko)}</div>
   <div class="nums"><span>${T("1990年代", "1990s", "1990년대")} <b class="big">${fmt(a, 0)}</b>${unit}</span><span>→ ${T("2020年代", "2020s", "2020년대")} <b class="big">${fmt(b, 0)}</b>${unit}</span>
   <span class="arrow">${arrow} ${tr ? fmt(tr.slope10) : "–"}${unit}/${T("10年", "decade", "10년")}</span></div>
-  <canvas id="c${idx}"></canvas><span class="badge ${cls}">${txt}</span>
+  <div class="cbox"><canvas id="c${idx}"></canvas></div><span class="badge ${cls}">${txt}</span>
   <div class="cmpline">${near ? T(`地上：気象庁${p.st.ja}（${fmt(p.dist, 0)}km）`, `Ground: JMA ${p.st.en} (${fmt(p.dist, 0)} km)`, `지상: 기상청 ${STKO[p.st.en] || p.st.en} (${fmt(p.dist, 0)}km)`) : T("地上観測が40km以内にないためNASAデータで表示", "No ground station within 40 km, NASA data shown", "40km 안에 지상 관측소가 없어 NASA 자료로 표시")} · NASA ${p.cell.trend[k] ? fmt(p.cell.trend[k].slope10) + unit + "/" + T("10年", "dec", "10년") + " (p=" + fmt(p.cell.trend[k].p, 2) + ")" : "–"}${near && tr ? " · " + T("地上", "ground", "지상") + " p=" + fmt(tr.p, 2) : ""}</div></div>`;
 }
 
@@ -104,7 +157,7 @@ function drawChart(id, p, k, p2) {
     const ds = so ? [{ label: T("JAXA衛星×気象庁", "JAXA satellite × JMA", "JAXA 위성 × 기상청"), data: src(p), borderColor: css(KEYS[k].color), pointRadius: 2, borderWidth: 2, tension: .25 }]
       : [{ label: T("NASA MODIS衛星", "NASA MODIS satellite", "NASA MODIS 위성"), data: src(p), borderColor: css(KEYS[k].color), pointRadius: 2, borderWidth: 2, tension: .25 },
       { label: T("北海道全体", "All Hokkaido", "홋카이도 전체"), data: D.hokkaido.series[sk].slice(i0), borderColor: css("--gray"), borderDash: [4, 3], pointRadius: 0, borderWidth: 1.5, tension: .25 }];
-    if (p2) ds.push({ label: p2.label, data: src(p2), borderColor: css("--heavy"), pointRadius: 0, borderWidth: 2, tension: .25 });
+    if (p2) ds.push({ label: placeLabel(p2), data: src(p2), borderColor: css("--heavy"), pointRadius: 0, borderWidth: 2, tension: .25 });
     chartRefs.push(new Chart(document.getElementById(id), { type: "line", data: { labels: yrs.slice(i0), datasets: ds },
       options: { animation: false, maintainAspectRatio: false, spanGaps: true, plugins: { legend: { display: true, labels: { boxWidth: 10, font: { size: 11 }, color: css("--muted") } } },
         scales: { x: { ticks: { maxTicksLimit: 6, color: css("--muted") }, grid: { display: false } }, y: { min: 0, max: so ? undefined : 100, ticks: { color: css("--muted"), maxTicksLimit: 3 } } } } }));
@@ -112,7 +165,7 @@ function drawChart(id, p, k, p2) {
   }
   const ds = [{ label: near ? T("地上（気象庁）", "Ground (JMA)", "지상 (기상청)") : "NASA", data: (near ? p.st.series[k] : p.cell.series[k]), borderColor: css(KEYS[k].color), backgroundColor: "transparent", pointRadius: 0, borderWidth: 2, tension: .25 },
     { label: "NASA POWER", data: p.cell.series[k], borderColor: css("--gray"), borderDash: [4, 3], pointRadius: 0, borderWidth: 1.5, tension: .25, hidden: !near }];
-  if (p2) ds.push({ label: p2.label, data: (p2.dist <= 40 ? p2.st.series[k] : p2.cell.series[k]), borderColor: css("--heavy"), pointRadius: 0, borderWidth: 2, tension: .25 });
+  if (p2) ds.push({ label: placeLabel(p2), data: (p2.dist <= 40 ? p2.st.series[k] : p2.cell.series[k]), borderColor: css("--heavy"), pointRadius: 0, borderWidth: 2, tension: .25 });
   chartRefs.push(new Chart(document.getElementById(id), { type: "line", data: { labels: yrs, datasets: ds },
     options: { animation: false, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { boxWidth: 10, font: { size: 11 }, color: css("--muted") } } },
       scales: { x: { ticks: { maxTicksLimit: 6, color: css("--muted") }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: css("--muted"), maxTicksLimit: 4 } } } } }));
@@ -205,17 +258,42 @@ function trustHTML(p) {
   <li>${T("検定：季節を絞った冬ごとの値にマン・ケンドール検定（p<0.05で有意）とセン傾き。", "Test: Mann–Kendall on one value per winter (significant at p < 0.05) with Sen's slope.", "검정: 겨울마다 값 하나씩으로 맨-켄달 검정(p<0.05면 유의)과 센 기울기.")}</li></ul>`;
 }
 
+function placeCard(q, i) {
+  const away = fmt(km(q.la, q.lo, q.cell.lat, q.cell.lon), 0);
+  return `<div class="card place ${i ? "b" : ""}"><h3>${placeLabel(q)}</h3>
+    ${q.out ? `<p class="out">${T(`北海道の外です。いちばん近い北海道のデータ（${away}km先）を表示しています。`, `Outside Hokkaido — showing the nearest Hokkaido data (${away} km away).`, `홋카이도 밖입니다. 가장 가까운 홋카이도 자료(${away}km 떨어짐)를 보여 줍니다.`)}</p>` : ""}
+    <p>${T(`最寄りの地上観測：気象庁${q.st.ja}（${fmt(q.dist, 0)}km）・NASAのマス：北緯${q.cell.lat}° 東経${q.cell.lon}°`, `Nearest ground station: JMA ${q.st.en} (${fmt(q.dist, 0)} km) · NASA cell ${q.cell.lat}°N ${q.cell.lon}°E`, `가장 가까운 지상 관측소: 기상청 ${STKO[q.st.en] || q.st.en} (${fmt(q.dist, 0)}km) · NASA 칸: 북위 ${q.cell.lat}° 동경 ${q.cell.lon}°`)}</p></div>`;
+}
+function renderPlaces() {
+  document.getElementById("places").innerHTML = places.map(placeCard).join("");
+  document.querySelectorAll(".pbar").forEach(el => {
+    el.innerHTML = `<div class="pb-places">${places.map(placeCard).join("")}</div>
+      <div class="row chips">${QUICK.map((q, i) => `<button class="chip ${places[0].q === i ? "on" : ""}" data-qi="${i}">${T(q[0], q[1], q[4])}</button>`).join("")}<a class="chip ghost" href="#/" data-go="pick">${T("地図でえらぶ →", "Pick on map →", "지도에서 고르기 →")}</a></div>`;
+    el.querySelectorAll("[data-qi]").forEach(b => (b.onclick = () => { const q = QUICK[+b.dataset.qi]; choose(q[2], q[3], null, { q: +b.dataset.qi }); }));
+  });
+}
+function renderEntries(p) {
+  const near = p.dist <= 40, src = near ? p.st : p.cell, h = src.series.heavy, f = senFit(h, D.winters[0]);
+  const s = p.st.series, j = D.winters.length - 1, i24 = D.winters.indexOf(2024);
+  const E = [["karte", T("雪質カルテ", "Snow chart", "눈 품질 카르테"), T("重い雪の日", "Heavy-snow days", "무거운 눈의 날"), `${fmt(mean(h.slice(0, 10)), 0)} → ${fmt(mean(h.slice(-10)), 0)}${T("日", " days", "일")}`, T("1990年代 → 2020年代", "1990s → 2020s", "1990년대 → 2020년대")],
+    ["future", T("未来をのぞく", "2050 preview", "미래 엿보기"), T("2050年の重い雪の日", "Heavy-snow days in 2050", "2050년 무거운 눈의 날"), `${f ? fmt(Math.max(0, f.at(2050)), 0) : "–"}${T("日", " days", "일")}`, T("今の傾きのまま（予報ではない）", "if today's trend continues (not a forecast)", "지금 기울기 그대로 (예보 아님)")],
+    ["time", T("冬のタイムマシン", "Time machine", "겨울 타임머신"), T("いちばん積もった雪", "Deepest snow", "가장 많이 쌓인 눈"), `${s.maxdepth[i24] ?? "–"} → ${s.maxdepth[j] ?? "–"}cm`, T(`2024年 → 2026年の冬・${p.st.ja}`, `winter 2024 → 2026 · ${p.st.en}`, `2024년 → 2026년 겨울 · ${STKO[p.st.en] || p.st.en}`)]];
+  document.getElementById("entries").innerHTML = E.map(([v, t, k, n, sub]) => `<a class="entry" href="#/${v}"><div class="et"><h3>${t}</h3><p class="note">${placeLabel(p)}</p></div>
+    <div class="estat"><span class="k mono">${k}</span><b class="mono">${n}</b><span class="note">${sub}</span></div><span class="go mono">→</span></a>`).join("");
+}
+
 function render() {
   chartRefs.forEach(c => c.destroy()); chartRefs = [];
   const [p, p2] = places;
-  document.getElementById("places").innerHTML = places.map((q, i) => `<div class="card place ${i ? "b" : ""}"><h3>${q.label}</h3><p>${T(`最寄りの地上観測：気象庁${q.st.ja}（${fmt(q.dist, 0)}km）・NASAのマス：北緯${q.cell.lat}° 東経${q.cell.lon}°`, `Nearest ground station: JMA ${q.st.en} (${fmt(q.dist, 0)} km) · NASA cell ${q.cell.lat}°N ${q.cell.lon}°E`, `가장 가까운 지상 관측소: 기상청 ${STKO[q.st.en] || q.st.en} (${fmt(q.dist, 0)}km) · NASA 칸: 북위 ${q.cell.lat}° 동경 ${q.cell.lon}°`)}</p></div>`).join("");
+  renderPlaces(); renderEntries(p);
   const keys = ["powder", "heavy", "icy", "share", "spring", "storm"];
   document.getElementById("cards").innerHTML = keys.map((k, i) => cardHTML(k, p, i)).join("");
-  keys.forEach((k, i) => drawChart("c" + i, p, k, p2));
+  if (VIEW === "karte") keys.forEach((k, i) => drawChart("c" + i, p, k, p2));
   document.getElementById("tmYear").textContent = tmYear;
   document.getElementById("tmSlider").value = tmYear;
   document.getElementById("tm").innerHTML = tmHTML(p, tmYear) + (p2 ? tmHTML(p2, tmYear).split('<div class="tmc">').slice(0, 2).join('<div class="tmc">') : "");
-  renderSat(); renderProj(p);
+  if (VIEW === "time") renderSat();
+  renderProj(p);
   document.getElementById("tips").innerHTML = tipsHTML(p);
   document.getElementById("trust").innerHTML = trustHTML(p);
 }
@@ -276,7 +354,7 @@ async function shareCard() {
   const a = k => mean(s[k].slice(0, 10)), b = k => mean(s[k].slice(-10));
   const W = 1080, H = 1080, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
   g.fillStyle = "#f5f8fc"; g.fillRect(0, 0, W, H); g.fillStyle = "#2c74d4"; g.fillRect(0, 0, 36, H);
-  g.fillStyle = "#10233f"; g.font = "900 64px 'Noto Sans JP'"; g.fillText(p.label, 90, 150);
+  g.fillStyle = "#10233f"; g.font = "900 64px 'Noto Sans JP'"; g.fillText(placeLabel(p), 90, 150);
   g.font = "700 34px 'Noto Sans JP'"; g.fillStyle = "#2c74d4"; g.fillText(T("わが街の雪質カルテ　1990年代 → 2020年代", "My Town Snow-Quality Chart · 1990s → 2020s", "우리 동네 눈 품질 카르테 · 1990년대 → 2020년대"), 90, 215);
   const rows = [["💧", T("重い雪の日", "Heavy-snow days", "무거운 눈의 날"), "heavy", "#c2410c"], ["❄️", T("パウダーの日", "Powder days", "파우더의 날"), "powder", "#2c74d4"], ["🧊", T("つるつる路面の日", "Icy-road days", "빙판길 날"), "icy", "#0e7490"]];
   rows.forEach(([ic, lab, k, col], i) => {
@@ -306,10 +384,10 @@ async function loadForecast(p) {
 function fcClass(d, i) {
   const tm = d.temperature_2m_mean[i], tx = d.temperature_2m_max[i], tn = d.temperature_2m_min[i], sn = d.snowfall_sum[i], rn = d.rain_sum[i];
   const wet = rn >= 1 || (sn >= 1 && tm > -2);           // rain or wet, heavy snow today
-  const freezeNext = i + 1 < d.time.length ? d.temperature_2m_min[i + 1] < 0 : false;
+  const freezeNext = i + 1 < d.time.length ? d.temperature_2m_min[i + 1] <= -2 : false;   // a clear refreeze, not just a frosty morning
   const out = [];
   if (sn >= 1) out.push(tm <= -5 ? ["powder", "❄️", T("パウダー", "Powder", "파우더")] : tm > -2 ? ["heavy", "💧", T("重い雪", "Heavy snow", "무거운 눈")] : ["mid", "🌨️", T("ふつうの雪", "Snow", "보통 눈")]);
-  if (wet && (tn < 0 || freezeNext)) out.push(["warn", "⚠️", T("転倒注意：ぬれた雪・雨が凍る", "Fall risk: wet snow/rain freezes", "낙상 주의: 젖은 눈·비가 얼어요")]);
+  if (wet && (tn <= -2 || freezeNext)) out.push(["warn", "⚠️", T("転倒注意：ぬれた雪・雨が凍る", "Fall risk: wet snow/rain freezes", "낙상 주의: 젖은 눈·비가 얼어요")]);
   else if (tx > 0 && tn < 0) out.push(["icy", "🧊", T("つるつる路面", "Icy roads", "빙판길")]);
   if (!out.length) out.push(["none", "·", sn > 0 ? T("雪わずか", "Light snow", "눈 조금") : T("雪なし", "No snow", "눈 없음")]);
   return out;
@@ -325,8 +403,8 @@ function renderForecast() {
       <div class="ic">${c.map(x => x[1]).join("")}</div><div class="lb">${c.map(x => x[2]).join("<br>")}</div>
       <div class="tt">${fmt(FC.temperature_2m_min[i], 0)}〜${fmt(FC.temperature_2m_max[i], 0)}℃${FC.snowfall_sum[i] > 0 ? ` · ❄${fmt(FC.snowfall_sum[i], 0)}cm` : ""}</div></div>`;
   }).join("");
-  note.innerHTML = T("35年のカルテと同じ決まり（雪の日の平均気温 −5℃以下＝パウダー、−2℃より暖かい＝重い雪、最高0℃超・最低0℃未満＝つるつる）で判定。⚠️は「雨やぬれた雪のあとに凍る」日で、札幌で転倒が特に多かった日の条件です。予報：Open-Meteo（気象機関の数値予報モデル）。",
-    "Same rules as the 35-year chart (snow day mean ≤ −5 °C = powder, > −2 °C = heavy, max > 0 °C and min < 0 °C = icy). ⚠️ marks rain or wet snow followed by freezing — the conditions of Sapporo's worst fall days. Forecast: Open-Meteo (national weather service models).", "35년 카르테와 같은 규칙(눈 온 날 평균 기온 −5℃ 이하 = 파우더, −2℃보다 따뜻함 = 무거운 눈, 최고 0℃ 초과·최저 0℃ 미만 = 빙판길)으로 판정. ⚠️는 「비나 젖은 눈 뒤에 얼어붙는」 날로, 삿포로에서 낙상이 특히 많았던 날의 조건입니다. 예보: Open-Meteo (기상기관 수치예보 모델).");
+  note.innerHTML = T("35年のカルテと同じ決まり（雪の日の平均気温 −5℃以下＝パウダー、−2℃より暖かい＝重い雪、最高0℃超・最低0℃未満＝つるつる）で判定。⚠️は「雨やぬれた雪のあと、−2℃以下まで冷えて凍る」日で、札幌で転倒が特に多かった日の条件です。予報：Open-Meteo（気象機関の数値予報モデル）。",
+    "Same rules as the 35-year chart (snow day mean ≤ −5 °C = powder, > −2 °C = heavy, max > 0 °C and min < 0 °C = icy). ⚠️ marks rain or wet snow followed by a freeze to −2 °C or below — the conditions of Sapporo's worst fall days. Forecast: Open-Meteo (national weather service models).", "35년 카르테와 같은 규칙(눈 온 날 평균 기온 −5℃ 이하 = 파우더, −2℃보다 따뜻함 = 무거운 눈, 최고 0℃ 초과·최저 0℃ 미만 = 빙판길)으로 판정. ⚠️는 「비나 젖은 눈 뒤에 −2℃ 이하로 얼어붙는」 날로, 삿포로에서 낙상이 특히 많았던 날의 조건입니다. 예보: Open-Meteo (기상기관 수치예보 모델).");
 }
 
 // Left panel: grainy noise landscape. Top = snowy sky (white/grey), then powder blue, teal, wet-snow orange, dark ground.
@@ -441,13 +519,15 @@ async function init() {
   drawGrain(); window.addEventListener("resize", () => { clearTimeout(drawGrain.t); drawGrain.t = setTimeout(drawGrain, 200); });
   document.getElementById("search").onsubmit = e => { e.preventDefault(); const q = document.getElementById("q").value.trim(); if (q) geocode(q); };
   document.getElementById("gps").onclick = () => navigator.geolocation ? navigator.geolocation.getCurrentPosition(
-    p => { const { latitude: la, longitude: lo } = p.coords; if (la < 41.2 || la > 45.7 || lo < 139.3 || lo > 146) { alert(T("現在地が北海道の外です。地図か住所で選んでください。", "You are outside Hokkaido. Please pick on the map or search.", "현재 위치가 홋카이도 밖입니다. 지도나 주소로 골라 주세요.")); return; } choose(la, lo, T("現在地", "My location", "현재 위치")); },
+    p => { const { latitude: la, longitude: lo } = p.coords; choose(la, lo); },
     () => alert(T("位置情報を取得できませんでした", "Could not get your location", "위치를 가져오지 못했습니다"))) : null;
   const sl = document.getElementById("tmSlider");
   sl.oninput = () => { tmYear = +sl.value; if (places.length) render(); };
   document.querySelectorAll(".tm-ctl .chip").forEach(b => (b.onclick = () => { tmYear = +b.dataset.y; if (places.length) render(); }));
   applyLang();
-  choose(QUICK[0][2], QUICK[0][3], T(QUICK[0][0], QUICK[0][1], QUICK[0][4]));
-  window.scrollTo(0, 0);
+  choose(QUICK[0][2], QUICK[0][3], null, { q: 0, quiet: true });
+  window.addEventListener("hashchange", route);
+  document.addEventListener("click", e => { const a = e.target.closest("[data-go]"); if (!a) return; e.preventDefault(); route.go = a.dataset.go; if (VIEW === "home") route(); else location.hash = "#/"; });
+  route();
 }
 init();
