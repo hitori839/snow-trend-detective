@@ -65,7 +65,7 @@ def winters(days):
             out["cold_t"].append(None); out["cold_wc"].append(None); out["cold_date"].append(None)
     return out
 
-TREND_KEYS = ("snow_days", "powder", "heavy", "share", "icy", "maxdepth", "cold_t", "cov_dec", "cov_apr", "storm_wet", "storm_powder", "storm_all")
+TREND_KEYS = ("snow_days", "powder", "heavy", "share", "icy", "maxdepth", "cold_t", "cov_dec", "cov_apr", "storm_wet", "storm_powder", "storm_all", "slr")
 
 JAXA = json.load(open(os.path.join(ROOT, "data", "raw", "jaxa_winter_precip.json")))
 # NASA MODIS monthly snow cover (%), from scripts/fetch_modis.py. December of the previous year and April of the winter year.
@@ -110,6 +110,22 @@ def jma_series(b):
 #   storm_powder big day with mean <= -5 C (big powder snowfall)
 JD_PATH = os.path.join(ROOT, "data", "raw", "jaxa_daily.json")
 JD = json.load(open(JD_PATH)) if os.path.exists(JD_PATH) else {}
+def snow_ratio(b, days):
+    """Physical check of 'heavier snow': cm of new snow per mm of water (JMA snowfall / JAXA GSMaP precipitation).
+    Uses snow days (JMA snowfall >= 1 cm, JAXA >= 1 mm, daily mean <= 1 C). Lower ratio = denser, heavier snow.
+    Caveats: satellites tend to under-catch snowfall; JMA snowfall is derived from snow-depth sensors."""
+    pr = JD.get(str(b)); out = []
+    for w in range(W0, W1 + 1):
+        if pr is None or w < 2001: out.append(None); continue
+        S = P = 0.0
+        for k, d in days.items():
+            if not ((k[:4] == str(w - 1) and k[4:6] == "12") or (k[:4] == str(w) and k[4:6] in ("01", "02", "03"))): continue
+            pp, sn, tm = pr.get(k), d.get("snow"), d.get("tmean")
+            if pp is None or sn is None or tm is None: continue
+            if sn >= 1 and pp >= 1 and tm <= 1: S += sn; P += pp
+        out.append(round(S / P, 3) if P > 50 else None)
+    return {"slr": out}
+
 def jaxa_storms(b, days):
     pr = JD.get(str(b)); out = {"storm_wet": [], "storm_powder": [], "storm_all": []}
     for w in range(W0, W1 + 1):
@@ -145,7 +161,7 @@ for p, b, ja, en, la, lo in STATIONS:
     s = jma_series(b)
     if s is None: continue
     s.update(modis("stations", str(b)))
-    s.update(jaxa_storms(b, s.pop("_days")))
+    _d = s.pop("_days"); s.update(jaxa_storms(b, _d)); s.update(snow_ratio(b, _d))
     f = os.path.join(ROOT, "data", "raw", "power", f"{la:.3f}_{lo:.3f}.json")
     ps = power_series(f)[1] if os.path.exists(f) else None
     stations.append({"id": b, "ja": ja, "en": en, "lat": la, "lon": lo, "series": s, "trend": trends(s),
@@ -188,6 +204,40 @@ for key in ("heavy", "powder", "icy", "share", "cov_apr", "cov_dec"):
     f["cells_fdr"] = sum(1 for t in tt if t and t["q"] < .05 and (t["slope10"] > 0) == (f["direction"] == "up"))
     FIELD[key] = f
     print("field", key, f, flush=True)
+# Sensitivity: do the conclusions depend on the -2 C / -5 C rules of thumb?
+def count_days(days, cond):
+    out = []
+    for w in range(W0, W1 + 1):
+        sel = [d for k, d in days.items() if (k[:4] == str(w - 1) and k[4:6] == "12") or (k[:4] == str(w) and k[4:6] in ("01", "02", "03"))]
+        if len(sel) < 100: out.append(None); continue
+        out.append(sum(1 for d in sel if d.get("tmean") is not None and d.get("snow") is not None and d["snow"] >= 1 and cond(d["tmean"])))
+    return out
+SENS = {"heavy": [], "powder": []}
+_jdays = []
+for p_, b, *_ in STATIONS:
+    path = os.path.join(ROOT, "data", "raw", "jma", f"{b}.json")
+    if not os.path.exists(path): continue
+    raw = json.load(open(path)); dd = {}
+    for ym, rows in raw.items():
+        y, m = ym.split("-")
+        for r in rows: dd[f"{y}{m}{r['d']:02d}"] = {"tmean": r["tmean"], "snow": r["snowfall"]}
+    _jdays.append(dd)
+_pdays = []
+for la, lo in CELLS:
+    f = os.path.join(ROOT, "data", "raw", "power", f"{la:.3f}_{lo:.3f}.json")
+    if not os.path.exists(f): continue
+    pp = json.load(open(f))["p"]
+    _pdays.append({k: {"tmean": None if pp["T2M"][k] <= -900 else pp["T2M"][k], "snow": None if pp["PRECSNOLAND"][k] <= -900 else pp["PRECSNOLAND"][k]} for k in pp["T2M"]})
+for th in (-3, -2, -1, 0):
+    js = [mk(count_days(d, lambda t: t > th)) for d in _jdays]; ns = [mk(count_days(d, lambda t: t > th)) for d in _pdays]
+    SENS["heavy"].append({"t": th, "jma_up": sum(t["slope10"] > 0 for t in js if t), "jma_sig_up": sum(t["slope10"] > 0 and t["p"] < .05 for t in js if t),
+                          "nasa_sig_up": sum(t["slope10"] > 0 and t["p"] < .05 for t in ns if t), "nasa_sig_down": sum(t["slope10"] < 0 and t["p"] < .05 for t in ns if t), "n_jma": len(js), "n_nasa": len(ns)})
+for th in (-4, -5, -6, -7):
+    js = [mk(count_days(d, lambda t: t <= th)) for d in _jdays]; ns = [mk(count_days(d, lambda t: t <= th)) for d in _pdays]
+    SENS["powder"].append({"t": th, "jma_down": sum(t["slope10"] < 0 for t in js if t), "nasa_sig_down": sum(t["slope10"] < 0 and t["p"] < .05 for t in ns if t),
+                           "nasa_sig_up": sum(t["slope10"] > 0 and t["p"] < .05 for t in ns if t), "n_jma": len(js), "n_nasa": len(ns)})
+print("sensitivity", json.dumps(SENS))
+
 # Impact: Sapporo fall-injury ambulance transports (Dec-Mar) vs JMA Sapporo snow indicators.
 # Both rise over time (ageing population, more icy/heavy days), so we also correlate year-to-year CHANGES.
 def pearson(x, y):
@@ -212,10 +262,12 @@ for key in ("heavy", "icy"):
     falls["link"][key] = {"n": len(x), "r_raw": round(pearson(x, y), 2), "p_raw": round(perm_p(x, y), 3),
                           "r_change": round(pearson(dx, dy), 2), "p_change": round(perm_p(dx, dy), 3)}
 print("falls", json.dumps(falls["link"]), falls["trend"])
+_sl = [st["trend"].get("slr") for st in stations]
+print("snow ratio: down", sum(1 for t in _sl if t and t["slope10"] < 0), "sig down", sum(1 for t in _sl if t and t["slope10"] < 0 and t["p"] < .05), "of", sum(1 for t in _sl if t))
 os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
 json.dump({"winters": list(range(W0, W1 + 1)), "cells": cells, "stations": stations,
            "hokkaido": {"series": modis("hokkaido", None), "trend": {k: mk(v) for k, v in modis("hokkaido", None).items()}},
-           "field": FIELD, "falls": falls,
+           "field": FIELD, "falls": falls, "sensitivity": SENS,
            "modis_lut": json.load(open(os.path.join(ROOT, "data", "raw", "modis_lut.json"))),
            "meta": {"powder_t": -5, "heavy_t": -2, "season": "Dec-Mar"}}, open(os.path.join(ROOT, "docs", "data.json"), "w"), ensure_ascii=False, separators=(",", ":"))
 print("cells", len(cells), "stations", len(stations))
