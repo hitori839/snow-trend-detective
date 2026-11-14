@@ -238,6 +238,46 @@ for th in (-4, -5, -6, -7):
                            "nasa_sig_up": sum(t["slope10"] > 0 and t["p"] < .05 for t in ns if t), "n_jma": len(js), "n_nasa": len(ns)})
 print("sensitivity", json.dumps(SENS))
 
+# Cause: did winters warm, and how much of the heavy-snow increase does warming explain?
+# 1) winter (Dec-Mar) mean temperature trend, NASA cells and JMA stations
+# 2) year-to-year link (both series detrended) between winter mean temperature and heavy-snow days at each station
+# 3) explained change = (days per degree) x (35-year warming), compared with the observed 35-year change
+def winter_mean(days):
+    out = []
+    for w in range(W0, W1 + 1):
+        v = [d["tmean"] for k, d in days.items() if d.get("tmean") is not None and ((k[:4] == str(w - 1) and k[4:6] == "12") or (k[:4] == str(w) and k[4:6] in ("01", "02", "03")))]
+        out.append(sum(v) / len(v) if len(v) > 100 else None)
+    return out
+def ols(x, y):
+    n = len(x); mx = sum(x) / n; my = sum(y) / n; sxx = sum((a - mx) ** 2 for a in x)
+    b = sum((a - mx) * (c - my) for a, c in zip(x, y)) / sxx
+    return b, b * math.sqrt(sxx / sum((c - my) ** 2 for c in y))
+def detrend(v, t):
+    b, _ = ols(t, v); mt = sum(t) / len(t); mv = sum(v) / len(v)
+    return [c - (mv + b * (a - mt)) for a, c in zip(t, v)]
+cell_t = [mk(winter_mean(d)) for d in _pdays]
+_wm_cells = [winter_mean(d) for d in _pdays]
+hok_series = [round(sum(x[i] for x in _wm_cells if x[i] is not None) / max(1, sum(1 for x in _wm_cells if x[i] is not None)), 2) for i in range(W1 - W0 + 1)]
+CAUSE = {"hok_temp": hok_series, "hok_trend": mk(hok_series),
+         "cells_up": sum(1 for t in cell_t if t and t["slope10"] > 0), "cells_sig_up": sum(1 for t in cell_t if t and t["slope10"] > 0 and t["p"] < .05), "n_cells": len(cell_t),
+         "stations": []}
+obs_sum = exp_sum = 0.0
+for (p_, b_, ja_, en_, la_, lo_), dd in zip([x for x in STATIONS if os.path.exists(os.path.join(ROOT, "data", "raw", "jma", f"{x[1]}.json"))], _jdays):
+    st = next(x for x in stations if x["id"] == b_)
+    tm = winter_mean(dd); hv = st["series"]["heavy"]
+    yrs = [W0 + i for i in range(len(tm)) if tm[i] is not None and hv[i] is not None]
+    T_ = [tm[y - W0] for y in yrs]; H_ = [hv[y - W0] for y in yrs]
+    per_deg, r = ols(detrend(T_, yrs), detrend(H_, yrs))
+    warm = ols(yrs, T_)[0] * (yrs[-1] - yrs[0]); obs = ols(yrs, H_)[0] * (yrs[-1] - yrs[0])
+    tt = mk(tm)
+    CAUSE["stations"].append({"id": b_, "en": en_, "temp_trend": tt, "days_per_degC": round(per_deg, 2), "r": round(r, 2),
+                              "warming_degC": round(warm, 2), "observed_change": round(obs, 2), "explained_change": round(per_deg * warm, 2)})
+    obs_sum += obs; exp_sum += per_deg * warm
+CAUSE["explained_share"] = round(exp_sum / obs_sum, 3) if obs_sum else None
+CAUSE["stations_warm_sig"] = sum(1 for x in CAUSE["stations"] if x["temp_trend"]["slope10"] > 0 and x["temp_trend"]["p"] < .05)
+CAUSE["stations_positive_link"] = sum(1 for x in CAUSE["stations"] if x["days_per_degC"] > 0)
+print("cause", json.dumps({k: v for k, v in CAUSE.items() if k not in ("hok_temp", "stations")}))
+
 # Impact: Sapporo fall-injury ambulance transports (Dec-Mar) vs JMA Sapporo snow indicators.
 # Both rise over time (ageing population, more icy/heavy days), so we also correlate year-to-year CHANGES.
 def pearson(x, y):
@@ -267,7 +307,7 @@ print("snow ratio: down", sum(1 for t in _sl if t and t["slope10"] < 0), "sig do
 os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
 json.dump({"winters": list(range(W0, W1 + 1)), "cells": cells, "stations": stations,
            "hokkaido": {"series": modis("hokkaido", None), "trend": {k: mk(v) for k, v in modis("hokkaido", None).items()}},
-           "field": FIELD, "falls": falls, "sensitivity": SENS,
+           "field": FIELD, "falls": falls, "sensitivity": SENS, "cause": CAUSE,
            "modis_lut": json.load(open(os.path.join(ROOT, "data", "raw", "modis_lut.json"))),
            "meta": {"powder_t": -5, "heavy_t": -2, "season": "Dec-Mar"}}, open(os.path.join(ROOT, "docs", "data.json"), "w"), ensure_ascii=False, separators=(",", ":"))
 print("cells", len(cells), "stations", len(stations))

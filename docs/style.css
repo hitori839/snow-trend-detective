@@ -234,3 +234,7 @@ ul.who li:last-child{border-bottom:0}
 ul.who .wi{font-size:22px;line-height:1.2}
 ul.who p{margin:2px 0 0;font-size:13.5px;color:var(--muted)}
 #tips ul.who{padding-left:0}
+#why{margin:0 0 14px;padding:12px 14px;border-radius:8px;background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--heavy);font-size:14px}
+#why p{margin:0 0 6px;color:var(--ink)}
+#why .lbl{margin:0 0 4px}
+#why .note{margin:4px 0 0}
