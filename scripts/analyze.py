@@ -274,9 +274,48 @@ for (p_, b_, ja_, en_, la_, lo_), dd in zip([x for x in STATIONS if os.path.exis
                               "warming_degC": round(warm, 2), "observed_change": round(obs, 2), "explained_change": round(per_deg * warm, 2)})
     obs_sum += obs; exp_sum += per_deg * warm
 CAUSE["explained_share"] = round(exp_sum / obs_sum, 3) if obs_sum else None
+# add winter precipitation (NASA POWER at the station point): heavy ~ temperature + precipitation (both detrended)
+import numpy as np
+def _detr(v, t):
+    b = np.polyfit(t, v, 1); return np.asarray(v, float) - np.polyval(b, t)
+tp_sum = 0.0
+for x in CAUSE["stations"]:
+    st = next(y for y in stations if y["id"] == x["id"])
+    if not st.get("power"): continue
+    P_ = st["power"]["series"]["precip"]; H_ = st["series"]["heavy"]; dd = _jdays[[s_[1] for s_ in STATIONS if os.path.exists(os.path.join(ROOT, "data", "raw", "jma", f"{s_[1]}.json"))].index(x["id"])]
+    T_ = winter_mean(dd)
+    idx = [i for i in range(len(H_)) if H_[i] is not None and T_[i] is not None and P_[i] is not None]
+    yr = np.array([W0 + i for i in idx], float); h = np.array([H_[i] for i in idx], float); t = np.array([T_[i] for i in idx]); pr = np.array([P_[i] for i in idx])
+    A = np.column_stack([_detr(t, yr), _detr(pr, yr), np.ones(len(yr))]); coef = np.linalg.lstsq(A, _detr(h, yr), rcond=None)[0]
+    span = yr[-1] - yr[0]; dT = np.polyfit(yr, t, 1)[0] * span; dP = np.polyfit(yr, pr, 1)[0] * span
+    x["precip_change_mm"] = round(float(dP), 1); x["explained_change_tp"] = round(float(coef[0] * dT + coef[1] * dP), 2)
+    tp_sum += coef[0] * dT + coef[1] * dP
+CAUSE["explained_share_tp"] = round(tp_sum / obs_sum, 3) if obs_sum else None
+CAUSE["stations_precip_up"] = sum(1 for x in CAUSE["stations"] if x.get("precip_change_mm", 0) > 0)
+# where does the change happen? winter mean temperature of each NASA cell vs its heavy-snow trend
+for c, wm in zip(cells, _wm_cells):
+    v = [a for a in wm if a is not None]; c["tmean"] = round(sum(v) / len(v), 2)
+ZONES = []
+for lo_, hi_ in ((-99, -7), (-7, -5), (-5, -3), (-3, 99)):
+    g = [c for c in cells if lo_ <= c["tmean"] < hi_ and c["trend"].get("heavy")]
+    if g: ZONES.append({"lo": lo_, "hi": hi_, "n": len(g), "heavy_slope": round(sum(c["trend"]["heavy"]["slope10"] for c in g) / len(g), 2),
+                        "sig_up": sum(1 for c in g if c["trend"]["heavy"]["slope10"] > 0 and c["trend"]["heavy"]["p"] < .05)})
+CAUSE["zones"] = ZONES
+# the same question worldwide (scripts/fetch_world.py -> docs/world.json, 5-degree land grid)
+WZ = []
+_wp = os.path.join(ROOT, "docs", "world.json")
+if os.path.exists(_wp):
+    WP = json.load(open(_wp))["points"]
+    for lo_, hi_ in ((-99, -15), (-15, -10), (-10, -5), (-5, -2), (-2, 99)):
+        g = [q for q in WP if lo_ <= q["tmean"] < hi_ and q["heavy"]]
+        if g: WZ.append({"lo": lo_, "hi": hi_, "n": len(g), "heavy_slope": round(sum(q["heavy"]["slope10"] for q in g) / len(g), 2),
+                         "light_slope": round(sum(q["light"]["slope10"] for q in g if q["light"]) / max(1, len([q for q in g if q["light"]])), 2),
+                         "sig_up": sum(1 for q in g if q["heavy"]["slope10"] > 0 and q["heavy"]["p"] < .05), "sig_down": sum(1 for q in g if q["heavy"]["slope10"] < 0 and q["heavy"]["p"] < .05)})
+CAUSE["world_zones"] = WZ
 CAUSE["stations_warm_sig"] = sum(1 for x in CAUSE["stations"] if x["temp_trend"]["slope10"] > 0 and x["temp_trend"]["p"] < .05)
 CAUSE["stations_positive_link"] = sum(1 for x in CAUSE["stations"] if x["days_per_degC"] > 0)
-print("cause", json.dumps({k: v for k, v in CAUSE.items() if k not in ("hok_temp", "stations")}))
+print("cause", json.dumps({k: v for k, v in CAUSE.items() if k not in ("hok_temp", "stations", "zones", "world_zones")}))
+print("zones", CAUSE["zones"]); print("world zones", CAUSE["world_zones"])
 
 # Impact: Sapporo fall-injury ambulance transports (Dec-Mar) vs JMA Sapporo snow indicators.
 # Both rise over time (ageing population, more icy/heavy days), so we also correlate year-to-year CHANGES.

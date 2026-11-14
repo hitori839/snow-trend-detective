@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>わが街の雪質カルテ | Snow Trend Detective</title>
 <meta name="generator" content="Code written with AI assistance (Claude, Anthropic)">
-<meta name="description" content="Is Hokkaido's powder snow turning heavy? A phone app that shows 35 years of snow-quality change for your town, checked against NASA, JAXA and JMA data.">
+<meta name="description" content="Is Hokkaido's light, dry snow turning heavy? A phone app that shows 35 years of snow-quality change for your town, checked against NASA, JAXA and JMA data.">
 <link rel="icon" href="assets/logo.svg">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#05070a">
@@ -24,8 +24,8 @@
     <div class="navlinks mono">
       <a href="#/" data-v="home" data-ja="ホーム" data-en="Home" data-ko="홈"></a>
       <a href="#/karte" data-v="karte" data-ja="雪質カルテ" data-en="Snow chart" data-ko="눈 품질 카르테"></a>
-      <a href="#/future" data-v="future" data-ja="未来をのぞく" data-en="2050 preview" data-ko="미래 엿보기"></a>
-      <a href="#/time" data-v="time" data-ja="冬のタイムマシン" data-en="Time machine" data-ko="겨울 타임머신"></a>
+      <a href="#/time" data-v="time" data-ja="雪の年表" data-en="Snow timeline" data-ko="눈의 연표"></a>
+      <a href="#/why" data-v="why" data-ja="なぜ・どこで" data-en="Why & where" data-ko="왜·어디서"></a>
     </div>
     <div class="lang mono" id="lang" role="group" aria-label="Language">
       <button data-l="ja">日本語</button><button data-l="en">EN</button><button data-l="ko">한국어</button>
@@ -48,8 +48,8 @@
     <ul class="hud-modes">
       <li class="on"><div><span class="ico">✕</span><span class="k" data-ja="いまの場所" data-en="Current place" data-ko="지금 장소"></span><b id="hudPlace">—</b></div></li>
       <li><a href="#/karte"><span class="ico">▦</span><span class="k">Snow chart</span><b data-ja="雪質カルテ" data-en="Snow-quality chart" data-ko="눈 품질 카르테"></b></a></li>
-      <li><a href="#/future"><span class="ico">◌</span><span class="k">2050</span><b data-ja="未来をのぞく" data-en="2050 preview" data-ko="미래 엿보기"></b></a></li>
-      <li><a href="#/time"><span class="ico">⟲</span><span class="k">Time machine</span><b data-ja="冬のタイムマシン" data-en="Winter time machine" data-ko="겨울 타임머신"></b></a></li>
+      <li><a href="#/time"><span class="ico">⟲</span><span class="k">1992 → 2050</span><b data-ja="雪の年表" data-en="Snow timeline" data-ko="눈의 연표"></b></a></li>
+      <li><a href="#/why"><span class="ico">◎</span><span class="k">Research</span><b data-ja="なぜ・どこで" data-en="Why & where" data-ko="왜·어디서"></b></a></li>
     </ul>
     <div class="hud-r">
       <p class="k">Evidence · Hokkaido 1992–2026</p>
@@ -67,7 +67,7 @@
     <!-- ============ HOME ============ -->
     <div class="view" data-view="home">
       <section class="intro">
-        <p data-html-ja="雪の質は、降るときの気温で決まります。<b>−5℃以下ならさらさらのパウダー</b>、<b>−2℃より暖かければ水を多く含んだ重い雪</b>。わたしたちは北海道の35回の冬を一日ずつ数え、その割合がどう変わったかを調べました。" data-html-en="Snow quality is set by the temperature it falls in. <b>At −5 °C or colder it is light powder</b>; <b>warmer than −2 °C it is wet, heavy snow</b>. We counted every snow day of 35 Hokkaido winters to see how that mix has changed." data-html-ko="눈의 품질은 내릴 때의 기온으로 정해집니다. <b>−5℃ 이하면 보송보송한 파우더</b>, <b>−2℃보다 따뜻하면 물기 많은 무거운 눈</b>. 홋카이도의 35번 겨울을 하루씩 세어, 그 비율이 어떻게 바뀌었는지 조사했습니다."></p>
+        <p data-html-ja="雪の質は、降るときの気温で決まります。<b>−5℃以下ならさらさらの軽い雪</b>、<b>−2℃より暖かければ水を多く含んだ重い雪</b>。わたしたちは北海道の35回の冬を一日ずつ数え、その割合がどう変わったかを調べました。" data-html-en="Snow quality is set by the temperature it falls in. <b>At −5 °C or colder it is light, dry snow</b>; <b>warmer than −2 °C it is wet, heavy snow</b>. We counted every snow day of 35 Hokkaido winters to see how that mix has changed." data-html-ko="눈의 품질은 내릴 때의 기온으로 정해집니다. <b>−5℃ 이하면 보송보송한 가벼운 눈</b>, <b>−2℃보다 따뜻하면 물기 많은 무거운 눈</b>. 홋카이도의 35번 겨울을 하루씩 세어, 그 비율이 어떻게 바뀌었는지 조사했습니다."></p>
         <p data-html-ja="場所を選ぶと、<b>あなたの街</b>の雪質カルテ・2050年の見通し・あの冬の積雪を、それぞれのページで見られます。" data-html-en="Pick a place to open <b>your town's</b> snow chart, a 2050 preview and a winter time machine, each on its own page." data-html-ko="장소를 고르면 <b>우리 동네</b>의 눈 품질 카르테, 2050년 전망, 그 겨울에 쌓인 눈을 각각의 페이지에서 볼 수 있습니다."></p>
       </section>
 
@@ -100,7 +100,7 @@
         <div class="box ev">
           <div class="ev-text">
             <h2 data-ja="重い雪は増え、春の雪は早く消えている。" data-en="More heavy snow, and spring snow vanishing sooner." data-ko="무거운 눈은 늘고, 봄 눈은 빨리 사라지고 있다."></h2>
-            <p data-ja="地上の観測所、NASAの再解析、NASAとJAXAの衛星という別々の目が、同じ方向を指しています。パウダーの日は減る傾向ですが、まだ「確か」とは言えません。" data-en="Ground stations, NASA reanalysis, and NASA and JAXA satellites — separate eyes — point the same way. Powder days lean down, but that is not yet certain." data-ko="지상 관측소, NASA 재분석, NASA와 JAXA 위성이라는 서로 다른 눈이 같은 방향을 가리킵니다. 파우더의 날은 줄어드는 경향이지만 아직 「확실」하다고는 말할 수 없습니다."></p>
+            <p data-ja="地上の観測所、NASAの再解析、NASAとJAXAの衛星という別々の目が、同じ方向を指しています。軽い雪の日は減る傾向ですが、まだ「確か」とは言えません。" data-en="Ground stations, NASA reanalysis, and NASA and JAXA satellites — separate eyes — point the same way. Light-snow days lean down, but that is not yet certain." data-ko="지상 관측소, NASA 재분석, NASA와 JAXA 위성이라는 서로 다른 눈이 같은 방향을 가리킵니다. 가벼운 눈의 날은 줄어드는 경향이지만 아직 「확실」하다고는 말할 수 없습니다."></p>
             <div class="cause" id="why"></div>
             <div class="field" id="field"></div>
           </div>
@@ -114,10 +114,11 @@
           <div class="row">
             <button id="gps" class="btn-o sm" data-ja="📍 現在地" data-en="📍 My location" data-ko="📍 현재 위치"></button>
             <form id="search" class="search">
-              <input id="q" type="search" autocomplete="off" data-ph-ja="住所・地名（例：札幌市中央区、ニセコ町）" data-ph-en="Address or town (e.g. Sapporo, Niseko)" data-ph-ko="주소·지명 (예: 札幌市中央区, ニセコ町)">
+              <input id="q" type="search" autocomplete="off" data-ph-ja="世界中の地名・住所（例：札幌市中央区、ソウル、Zermatt）" data-ph-en="Any place on Earth (e.g. Sapporo, 서울, Zermatt)" data-ph-ko="세계 어디든 지명·주소 (예: 삿포로, ソウル, Zermatt)">
               <button class="btn-k" data-ja="検索" data-en="Search" data-ko="검색"></button>
             </form>
           </div>
+          <div class="row chips cands" id="cands"></div>
           <div class="row chips" id="quick"></div>
           <div id="map" aria-label="Hokkaido map"></div>
           <label class="cmp"><input type="checkbox" id="cmpOn"> <span data-ja="2つの街をくらべる（地図で2か所目を選ぶ）" data-en="Compare two places (pick a second place on the map)" data-ko="두 동네 비교하기 (지도에서 두 번째 장소 고르기)"></span></label>
@@ -172,7 +173,7 @@
             <a class="chip" href="https://github.com/hitori839/snow-trend-detective" target="_blank" rel="noopener" data-ja="計算コード（GitHub）" data-en="Code (GitHub)" data-ko="계산 코드 (GitHub)"></a>
           </div>
           <ul class="dots small">
-            <li data-ja="列の意味：〇〇_early_mean＝古い10年の平均、〇〇_late_mean＝最近10年の平均、slope_per_decade＝セン傾き（10年あたり）、p＝マン・ケンドール検定、q_fdr＝ベンジャミニ・ホッホベルグ補正。heavy＝重い雪の日、powder＝パウダーの日、icy＝つるつる路面の日、slr＝水1mmで積もる雪(cm)、storm_wet＝重い大雪・大雨の日、cov_apr＝4月の雪のおおわれ方(%)。" data-en="Columns: X_early_mean = older 10-year mean, X_late_mean = latest 10-year mean, slope_per_decade = Sen's slope, p = Mann–Kendall, q_fdr = Benjamini–Hochberg. heavy = heavy-snow days, powder = powder days, icy = icy-road days, slr = cm of snow per mm of water, storm_wet = wet heavy-storm days, cov_apr = April snow cover (%)." data-ko="열의 뜻: X_early_mean=앞 10년 평균, X_late_mean=최근 10년 평균, slope_per_decade=센 기울기(10년당), p=맨-켄달 검정, q_fdr=벤야미니-호흐베르크 보정. heavy=무거운 눈의 날, powder=파우더의 날, icy=빙판길 날, slr=물 1mm로 쌓이는 눈(cm), storm_wet=무거운 폭설·폭우 날, cov_apr=4월 눈 덮임(%)."></li>
+            <li data-ja="列の意味：〇〇_early_mean＝古い10年の平均、〇〇_late_mean＝最近10年の平均、slope_per_decade＝セン傾き（10年あたり）、p＝マン・ケンドール検定、q_fdr＝ベンジャミニ・ホッホベルグ補正。heavy＝重い雪の日、powder＝軽い雪の日、icy＝つるつる路面の日、slr＝水1mmで積もる雪(cm)、storm_wet＝重い大雪・大雨の日、cov_apr＝4月の雪のおおわれ方(%)。" data-en="Columns: X_early_mean = older 10-year mean, X_late_mean = latest 10-year mean, slope_per_decade = Sen's slope, p = Mann–Kendall, q_fdr = Benjamini–Hochberg. heavy = heavy-snow days, light snow = light-snow days, icy = icy-road days, slr = cm of snow per mm of water, storm_wet = wet heavy-storm days, cov_apr = April snow cover (%)." data-ko="열의 뜻: X_early_mean=앞 10년 평균, X_late_mean=최근 10년 평균, slope_per_decade=센 기울기(10년당), p=맨-켄달 검정, q_fdr=벤야미니-호흐베르크 보정. heavy=무거운 눈의 날, powder=가벼운 눈의 날, icy=빙판길 날, slr=물 1mm로 쌓이는 눈(cm), storm_wet=무거운 폭설·폭우 날, cov_apr=4월 눈 덮임(%)."></li>
             <li data-ja="出典の表示をお願いします：Snow Trend Detective が NASA POWER・NASA MODIS（GIBS）・JAXA GSMaP・気象庁のデータを加工して作成。元データの利用条件は各機関の規約に従ってください。" data-en="Please credit: produced by Snow Trend Detective from NASA POWER, NASA MODIS (GIBS), JAXA GSMaP and JMA data. The original data remain under each agency's terms." data-ko="출처 표시를 부탁드립니다: Snow Trend Detective가 NASA POWER·NASA MODIS(GIBS)·JAXA GSMaP·기상청 자료를 가공해 작성. 원자료 이용 조건은 각 기관의 규정을 따라 주세요."></li>
           </ul>
         </div>
@@ -207,34 +208,47 @@
       </section>
     </div>
 
-    <!-- ============ 2050 PREVIEW ============ -->
-    <div class="view" data-view="future" hidden>
-      <div class="pbar"></div>
-      <section>
-        <p class="lbl mono" data-ja="未来をのぞく" data-en="A look at 2050" data-ko="미래 엿보기"></p>
-        <div class="box" id="proj"></div>
-      </section>
-    </div>
-
     <!-- ============ TIME MACHINE ============ -->
     <div class="view" data-view="time" hidden>
       <div class="pbar"></div>
       <section>
-        <p class="lbl mono" data-ja="冬のタイムマシン" data-en="Winter time machine" data-ko="겨울 타임머신"></p>
+        <p class="lbl mono" data-ja="雪の年表 · 1992 → 明日 → 2050" data-en="Snow timeline · 1992 → tomorrow → 2050" data-ko="눈의 연표 · 1992 → 내일 → 2050"></p>
         <div class="box tm">
           <div class="tm-ctl">
-            <div class="tm-head"><span data-ja="年をえらぶ" data-en="Pick a winter" data-ko="해 고르기"></span> <b id="tmYear"></b></div>
-            <input type="range" id="tmSlider" min="1992" max="2026" step="1">
-            <div class="chips"><button class="chip" data-y="2006">2006</button><button class="chip" data-y="2024" data-ja="2024（旅行した冬）" data-en="2024 (my trip)" data-ko="2024 (여행한 겨울)"></button><button class="chip" data-y="2026" data-ja="2026（今年）" data-en="2026 (latest)" data-ko="2026 (최신)"></button></div>
+            <div class="tm-head"><span id="tlKind"></span> <b id="tmYear"></b></div>
+            <input type="range" id="tmSlider" min="0" max="40" step="1">
+            <div class="tl-axis mono"><span>1992</span><span data-ja="観測" data-en="observed" data-ko="관측"></span><span>2026</span><span data-ja="明日" data-en="tomorrow" data-ko="내일"></span><span data-ja="今の傾き" data-en="trend" data-ko="추세"></span><span>2050</span></div>
+            <div class="chips"><button class="chip" data-t="14">2006</button><button class="chip" data-t="32" data-ja="2024（旅行した冬）" data-en="2024 (my trip)" data-ko="2024 (여행한 겨울)"></button><button class="chip" data-t="34" data-ja="2026（今年）" data-en="2026 (latest)" data-ko="2026 (최신)"></button><button class="chip" data-t="35" data-ja="明日〜7日" data-en="Next 7 days" data-ko="내일~7일"></button><button class="chip" data-t="38">2040</button><button class="chip" data-t="40">2050</button></div>
           </div>
           <div class="tm-body" id="tm"></div>
-          <div class="sat">
+          <div id="tlFc"></div>
+          <div id="proj"></div>
+          <div class="sat" id="tlSat">
             <p class="lbl mono" data-ja="その冬の衛星写真 · NASA MODIS 月平均の雪" data-en="That winter from space · NASA MODIS monthly snow" data-ko="그 겨울의 위성 사진 · NASA MODIS 월평균 눈"></p>
             <div class="row chips" id="satChips"><button class="chip" data-m="02" data-ja="2月（真冬）" data-en="February (midwinter)" data-ko="2월 (한겨울)"></button><button class="chip on" data-m="04" data-ja="4月（雪どけ）" data-en="April (melt)" data-ko="4월 (눈 녹을 때)"></button></div>
             <div id="satmap" aria-label="Satellite snow cover map"></div>
             <p class="note" id="satNote"></p>
           </div>
         </div>
+      </section>
+    </div>
+    <!-- ============ WHY & WHERE (research) ============ -->
+    <div class="view" data-view="why" hidden>
+      <section>
+        <p class="lbl mono" data-ja="1 · 原因の分解" data-en="1 · What made the snow heavier" data-ko="1 · 원인 분해"></p>
+        <div class="box" id="why1"></div>
+      </section>
+      <section>
+        <p class="lbl mono" data-ja="2 · 北海道のどこで変わったか" data-en="2 · Where in Hokkaido" data-ko="2 · 홋카이도 어디서 바뀌었나"></p>
+        <div class="box" id="why2"></div>
+      </section>
+      <section>
+        <p class="lbl mono" data-ja="3 · 世界で見ると" data-en="3 · The same question worldwide" data-ko="3 · 세계로 보면"></p>
+        <div class="box" id="why3"></div>
+      </section>
+      <section>
+        <p class="lbl mono" data-ja="4 · どこまで確かか" data-en="4 · How sure, and what we cannot say" data-ko="4 · 어디까지 확실한가"></p>
+        <div class="box" id="why4"></div>
       </section>
     </div>
   </main>
