@@ -370,3 +370,6 @@ ol.steps{margin:6px 0 0;padding-left:20px} ol.steps li{margin:7px 0;font-size:14
 .hud-r .profile{max-height:118px}
 .hud-r .tele li{padding:5px 0}
 .hud-r .imp li{padding:4px 0}
+.three{margin-top:14px;border:1px solid var(--line);border-radius:6px;padding:12px 14px;background:rgba(0,0,0,.2)}
+.three small{color:var(--faint);font-size:10.5px}
+.three p{font-size:14px;margin:6px 0}

@@ -32,6 +32,7 @@ NASA Space Apps Challenge 2026 · **Be An Earth System Trend Detective** · Team
 | Quantity vs quality | The amount of snow barely changed (snow days: no clear trend; deepest snow mostly unchanged) — its quality did |
 | Other causes | Arctic Oscillation and El Niño (NOAA CPC indices) have no 35-year trend (p = 0.78, 1.0) and add R² +0.02 year to year; a warmer Sea of Japan (+1.36 °C/century, JMA) is the likely remainder |
 | What follows | More roof load, falls on icy roads, wet snow on lines and trees, wet-snow avalanches and snow-clearing accidents; shorter snow season and less light snow (our data + cited studies) |
+| Next decade | Three estimates at each station: trend extension + CMIP6 HighResMIP models MRI-AGCM3-2-S (Japan) and EC-Earth3P-HR. Models reproduce the past rise in 15/20 station–model pairs (weaker than observed); MRI: further rise at 9/10 stations, EC-Earth: 4/10 |
 | Not yet certain | Light-snow (powder) days lean down but chance level 6 % > 5 %; ⚠️ forecast not validated (no daily accident data) |
 | Robustness | Heavy-snow cut-off moved to −3/−2/−1/0 °C: same conclusion; Benjamini–Hochberg FDR; directions match *Climate Change in Japan 2025* (MEXT & JMA), Chapter 6 |
 
@@ -42,6 +43,7 @@ NASA Space Apps Challenge 2026 · **Be An Earth System Trend Detective** · Team
 - **JAXA GSMaP** gauge-adjusted v6, monthly and daily, via JAXA Earth API (`jaxa-earth`). https://data.earth.jaxa.jp/
 - **Japan Meteorological Agency** historical daily data, 10 Hokkaido stations. https://www.data.jma.go.jp/stats/etrn/
 - **Sapporo City Fire Bureau** fall-injury statistics (via Winter Life Promotion Council, https://tsurutsuru.jp/toukei1.html) — `data/sapporo_falls.csv`
+- **CMIP6 HighResMIP** daily projections via Open-Meteo Climate API (`scripts/fetch_climate.py`).
 - **NOAA CPC** Arctic Oscillation and ONI indices (`data/indices/`); JMA sea-surface temperature trends.
 - **Open-Meteo** forecast API; place search: Wikidata, Photon (OpenStreetMap), GSI address search; place names: BigDataCloud; map tiles: GSI.
 - Literature: MEXT & JMA *Climate Change in Japan 2025*, Ch. 6; Helfricht et al. (2018) HESS; Hedstrom & Pomeroy (1998).

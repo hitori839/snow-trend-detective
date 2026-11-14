@@ -367,6 +367,38 @@ for key in ("heavy", "icy"):
 print("falls", json.dumps(falls["link"]), falls["trend"])
 _sl = [st["trend"].get("slr") for st in stations]
 print("snow ratio: down", sum(1 for t in _sl if t and t["slope10"] < 0), "sig down", sum(1 for t in _sl if t and t["slope10"] < 0 and t["p"] < .05), "of", sum(1 for t in _sl if t))
+# ---- climate models (CMIP6 HighResMIP via Open-Meteo, scripts/fetch_climate.py): do they reproduce the past,
+#      and what do they say about the next decade? Delta method: observed 2017-2026 mean + model (2027-2036 minus 2017-2026).
+CLIM = {"models": ["MRI_AGCM3_2_S", "EC_Earth3P_HR"], "stations": []}
+def _cw(d, m):
+    t, sn = d["temperature_2m_mean_" + m], d["snowfall_sum_" + m]; idx = {}
+    for i, k in enumerate(d["time"]):
+        y_, mo = int(k[:4]), int(k[5:7]); w = y_ + 1 if mo == 12 else y_ if mo <= 3 else None
+        if w: idx.setdefault(w, []).append(i)
+    H = []; Lg = []
+    for w in range(1992, 2051):
+        ii = [i for i in idx.get(w, []) if t[i] is not None and sn[i] is not None]
+        if len(ii) < 100: H.append(None); Lg.append(None); continue
+        sd = [i for i in ii if sn[i] >= 1]; H.append(sum(1 for i in sd if t[i] > -2)); Lg.append(sum(1 for i in sd if t[i] <= -5))
+    return H, Lg
+def _m(v): v = [x for x in v if x is not None]; return sum(v) / len(v) if v else None
+for st in stations:
+    f = os.path.join(ROOT, "data", "raw", "climate", f"st_{st['id']}.json")
+    if not os.path.exists(f): continue
+    d = json.load(open(f)); row = {"id": st["id"], "en": st["en"], "obs_recent": round(_m(st["series"]["heavy"][-10:]), 1),
+        "obs_light_recent": round(_m(st["series"]["powder"][-10:]), 1), "obs_trend": st["trend"]["heavy"]["slope10"], "models": {}}
+    for m in CLIM["models"]:
+        H, Lg = _cw(d, m); past = mk(H[:35])
+        row["models"][m] = {"past_slope10": past["slope10"] if past else None,
+                            "heavy_delta": round(_m(H[35:45]) - _m(H[25:35]), 1), "light_delta": round(_m(Lg[35:45]) - _m(Lg[25:35]), 1)}
+    CLIM["stations"].append(row)
+if CLIM["stations"]:
+    pairs = [(r, m) for r in CLIM["stations"] for m in CLIM["models"]]
+    CLIM["past_same_dir"] = sum(1 for r, m in pairs if (r["models"][m]["past_slope10"] or 0) > 0)
+    CLIM["n_pairs"] = len(pairs)
+    for m in CLIM["models"]:
+        CLIM[m + "_up"] = sum(1 for r in CLIM["stations"] if r["models"][m]["heavy_delta"] > 0)
+    print("climate", {k: v for k, v in CLIM.items() if k != "stations"})
 os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
 # ---- open data for city and research use: one row per NASA cell / JMA station ----
 import csv
@@ -401,7 +433,7 @@ with open(os.path.join(OUTD, "stations_trends.csv"), "w", newline="", encoding="
 print("open data written:", os.listdir(OUTD))
 json.dump({"winters": list(range(W0, W1 + 1)), "cells": cells, "stations": stations,
            "hokkaido": {"series": modis("hokkaido", None), "trend": {k: mk(v) for k, v in modis("hokkaido", None).items()}},
-           "field": FIELD, "falls": falls, "sensitivity": SENS, "cause": CAUSE,
+           "field": FIELD, "falls": falls, "sensitivity": SENS, "cause": CAUSE, "climate": CLIM,
            "modis_lut": json.load(open(os.path.join(ROOT, "data", "raw", "modis_lut.json"))),
            "meta": {"powder_t": -5, "heavy_t": -2, "season": "Dec-Mar"}}, open(os.path.join(ROOT, "docs", "data.json"), "w"), ensure_ascii=False, separators=(",", ":"))
 print("cells", len(cells), "stations", len(stations))

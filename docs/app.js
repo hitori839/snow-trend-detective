@@ -981,6 +981,24 @@ function renderTlMap(kind) {
   document.getElementById("tlMapNote").textContent = fut ? T("色が濃いほど重い雪の日が多い。💧＝いまより2日以上増えるマス。", "Darker = more heavy-snow days. 💧 = cells gaining 2+ days vs now.", "진할수록 무거운 눈의 날이 많음. 💧 = 지금보다 2일 이상 늘어나는 칸.") : T("色が濃いほど重い雪の日が多い（NASAの約50kmマス）。", "Darker = more heavy-snow days (NASA ~50 km cells).", "진할수록 무거운 눈의 날이 많음 (NASA 약 50km 칸).");
 }
 
+
+// ---------- next decade: three estimates at the nearest station (trend line, two climate models) ----------
+function threeHTML(p) {
+  const CL = D.climate; if (!CL || !CL.stations || p.out) return "";
+  const r = CL.stations.find(x => x.id === p.st.id); if (!r) return "";
+  const f = senFit(p.st.series.heavy, D.winters[0]), trendNext = f ? mean([2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036].map(y => f.at(y))) : null;
+  const est = [[T("今の傾きをのばす", "Today's trend extended", "지금 기울기 연장"), trendNext, T("観測35年", "35 years observed", "관측 35년")],
+    [T("気候モデル MRI-AGCM（日本・気象研究所, 20km）", "Climate model MRI-AGCM (Japan MRI, 20 km)", "기후 모델 MRI-AGCM (일본 기상연구소, 20km)"), r.obs_recent + r.models.MRI_AGCM3_2_S.heavy_delta, "CMIP6"],
+    [T("気候モデル EC-Earth3P（欧州, 50km）", "Climate model EC-Earth3P (Europe, 50 km)", "기후 모델 EC-Earth3P (유럽, 50km)"), r.obs_recent + r.models.EC_Earth3P_HR.heavy_delta, "CMIP6"]];
+  const vals = est.map(e => e[1]).filter(v => v != null), lo = Math.min(...vals), hi = Math.max(...vals);
+  return `<div class="three"><p class="lbl mono">${T(`次の10年（2027〜2036年の平均）· 重い雪の日 · 気象庁${p.st.ja}`, `Next decade (2027–2036 average) · heavy-snow days · JMA ${p.st.en}`, `다음 10년 (2027~2036년 평균) · 무거운 눈의 날 · 기상청 ${STKO[p.st.en] || p.st.en}`)}</p>
+    <table class="zt"><tr><th>${T("見積もり", "estimate", "추정")}</th><th>${T("重い雪の日", "heavy-snow days", "무거운 눈의 날")}</th><th>${T("いま（2017〜2026）との差", "vs now (2017–2026)", "지금(2017~2026)과의 차이")}</th></tr>
+    ${est.map(([n, v, k]) => `<tr><td>${n} <small class="mono">${k}</small></td><td><b>${fmt(v, 0)}</b></td><td>${v - r.obs_recent >= 0 ? "+" : ""}${fmt(v - r.obs_recent, 1)}</td></tr>`).join("")}</table>
+    <p>${T(`3つの見積もりは ${fmt(lo, 0)}〜${fmt(hi, 0)}日（いま ${fmt(r.obs_recent, 0)}日）。`, `The three estimates span ${fmt(lo, 0)}–${fmt(hi, 0)} days (now ${fmt(r.obs_recent, 0)}).`, `세 추정은 ${fmt(lo, 0)}~${fmt(hi, 0)}일 (지금 ${fmt(r.obs_recent, 0)}일).`)}
+      ${lo >= r.obs_recent - 0.5 ? T("どれも「減らない」方向です。重い雪への備えは続ける必要があります。", "None points to fewer heavy-snow days — keep preparing for heavy snow.", "어느 것도 「줄어든다」는 방향이 아닙니다. 무거운 눈 대비는 계속 필요합니다.") : T("見積もりによって向きが分かれます。毎年の観測で確かめ続ける必要があります。", "The estimates disagree in direction — keep checking with new observations every winter.", "추정에 따라 방향이 갈립니다. 해마다 관측으로 계속 확인해야 합니다.")}</p>
+    <p class="note">${T("気候モデルは、モデルの「いま→次の10年」の変化を観測の最近10年に足しました（デルタ法）。CMIP6 HighResMIP（Open-Meteo Climate API）。", "Climate models: the model's change from now to the next decade added to the observed last 10 years (delta method). CMIP6 HighResMIP via Open-Meteo Climate API.", "기후 모델: 모델의 「지금→다음 10년」 변화를 관측 최근 10년에 더함 (델타법). CMIP6 HighResMIP (Open-Meteo Climate API).")}</p></div>`;
+}
+
 function renderProj(p, Y = 2036) {
   const near = p.dist <= 40, src = near ? p.st : p.cell;
   const i01 = D.winters.indexOf(2001);
@@ -1001,6 +1019,7 @@ function renderProj(p, Y = 2036) {
   }).join("");
   document.getElementById("proj").innerHTML = `<h2>${T(`${Y}年、このままの傾きなら。`, `${Y}, if the trend simply continues.`, `${Y}년, 지금 기울기 그대로라면.`)}</h2>
     <div class="proj-grid">${html}</div>
+    ${threeHTML(p)}
     ${impactHTML(p, T(`${Y - 2026}年後の冬に、ここで増えやすいこと・減りやすいこと`, `In ${Y - 2026} year${Y - 2026 > 1 ? "s" : ""} here: more likely / less likely`, `${Y - 2026}년 후 겨울, 여기서 늘기 쉬운 것·줄기 쉬운 것`))}<a class="link-in" href="#/why">${T("根拠は「なぜ・どこで」へ →", "Evidence: Why & where →", "근거는 「왜·어디서」로 →")}</a>
     <p class="note">${T("35年（衛星は26年）の傾き（セン傾き）を、近い将来（1〜10年）にだけのばした目安です。幅は傾きの95%信頼区間。毎年の天気は大きくゆれるので、<b>「その年の予報」ではなく、平均的な冬がどちらへ動くかの目安</b>です。",
       "The 35-year (satellite: 26-year) Sen's slope extended only into the near future (1–10 years); the range is the slope's 95 % confidence interval. Single winters vary a lot, so this is <b>not a forecast for that year</b> — it shows where an average winter is heading.",
@@ -1084,6 +1103,15 @@ function renderWhy() {
     <div class="cq">${CQ.map(([a, t, d, u]) => `<div class="cqi ${a === "⬆" ? "up" : a === "⬇" ? "dn" : ""}"><b class="cqa">${a}</b><div><h4>${t}</h4><p>${d}${u ? ` <a href="${u}" target="_blank" rel="noopener">${T("出典", "source", "출처")}</a>` : ""}</p></div></div>`).join("")}</div>
     <p class="note">${T("⬆⬇は「増えやすい・減りやすい」向きです。私たちのデータで確かめたもの（重さ、転倒との関係、4月の雪）と、研究や報道で示されているもの（停電、雪崩、事故）を区別して出典をつけています。", "⬆⬇ show the likely direction. We separate what our data show (weight, link with falls, April snow) from what studies and reports show (power cuts, avalanches, accidents), each with a source.", "⬆⬇는 「늘기 쉬움·줄기 쉬움」 방향입니다. 우리 데이터로 확인한 것(무게, 낙상과의 관계, 4월 눈)과 연구·보도가 보여 주는 것(정전, 눈사태, 사고)을 구분해 출처를 붙였습니다.")}</p>`;
 
+  // climate models
+  const CL = D.climate;
+  if (CL && CL.stations && CL.stations.length && document.getElementById("why7")) document.getElementById("why7").innerHTML = `<h2>${T("気候モデルも、重い雪の増加を再現した。でも、強さは小さめ。", "Climate models reproduce the rise in heavy snow — but weaker than observed.", "기후 모델도 무거운 눈 증가를 재현했다. 하지만 크기는 작게.")}</h2>
+    <table class="zt"><tr><th>${T("観測所", "station", "관측소")}</th><th>${T("観測 /10年", "observed /dec", "관측 /10년")}</th><th>MRI /10y</th><th>EC-Earth /10y</th><th>${T("次の10年 MRI", "next decade MRI", "다음 10년 MRI")}</th><th>${T("次の10年 EC", "next decade EC", "다음 10년 EC")}</th></tr>
+    ${CL.stations.map(r => `<tr><td>${T(D.stations.find(x => x.id === r.id).ja, r.en, STKO[r.en] || r.en)}</td><td><b>${r.obs_trend > 0 ? "+" : ""}${fmt(r.obs_trend, 1)}</b></td><td>${fmt(r.models.MRI_AGCM3_2_S.past_slope10, 1)}</td><td>${fmt(r.models.EC_Earth3P_HR.past_slope10, 1)}</td><td>${r.models.MRI_AGCM3_2_S.heavy_delta > 0 ? "+" : ""}${fmt(r.models.MRI_AGCM3_2_S.heavy_delta, 1)}</td><td>${r.models.EC_Earth3P_HR.heavy_delta > 0 ? "+" : ""}${fmt(r.models.EC_Earth3P_HR.heavy_delta, 1)}</td></tr>`).join("")}</table>
+    <p>${T(`1992〜2026年について、2つのモデルは${CL.n_pairs}組中${CL.past_same_dir}組で「重い雪の日が増える」向きを再現しましたが、増え方は観測より小さめでした。次の10年は、日本の気象研究所のモデル（20km）が${CL.MRI_AGCM3_2_S_up}/10か所でさらに増加、欧州のモデル（50km）は${CL.EC_Earth3P_HR_up}/10か所で増加と、はっきりしません。そこで、未来は1つの数字ではなく「今の傾き・2つのモデル」の3つの見積もりで見せています。`,
+      `For 1992–2026 the two models reproduce the rise in heavy-snow days in ${CL.past_same_dir} of ${CL.n_pairs} station–model pairs, but weaker than observed. For the next decade, Japan's MRI model (20 km) gives a further rise at ${CL.MRI_AGCM3_2_S_up}/10 stations, the European model (50 km) at ${CL.EC_Earth3P_HR_up}/10 — no clear signal. So the future is shown as three estimates (today's trend and two models), not one number.`,
+      `1992~2026년에 대해 두 모델은 ${CL.n_pairs}쌍 중 ${CL.past_same_dir}쌍에서 「무거운 눈의 날 증가」 방향을 재현했지만, 증가 폭은 관측보다 작았습니다. 다음 10년은 일본 기상연구소 모델(20km)이 ${CL.MRI_AGCM3_2_S_up}/10곳에서 더 증가, 유럽 모델(50km)은 ${CL.EC_Earth3P_HR_up}/10곳에서 증가로 뚜렷하지 않습니다. 그래서 미래는 숫자 하나가 아니라 「지금 기울기·두 모델」의 세 추정으로 보여 줍니다.`)}</p>
+    <p class="note">${T("CMIP6 HighResMIP（MRI-AGCM3-2-S、EC-Earth3P-HR）、Open-Meteo Climate APIで取得。同じ決まり（雪1cm以上、平均−2℃より暖かい＝重い雪）で数えました。", "CMIP6 HighResMIP (MRI-AGCM3-2-S, EC-Earth3P-HR) via the Open-Meteo Climate API, counted with the same rules.", "CMIP6 HighResMIP (MRI-AGCM3-2-S, EC-Earth3P-HR), Open-Meteo Climate API로 받아 같은 규칙으로 셈.")}</p>`;
   // limits
   const F = D.field, H = D.sensitivity.heavy;
   document.getElementById("why4").innerHTML = `<ul class="dots">
