@@ -17,11 +17,11 @@ const SIDE = {
 let VIEW = "home";
 const STKO = { Sapporo: "삿포로", Asahikawa: "아사히카와", Obihiro: "오비히로", Kushiro: "구시로", Hakodate: "하코다테", Wakkanai: "왓카나이", Abashiri: "아바시리", Muroran: "무로란", "Kutchan (Niseko)": "굿찬 (니세코)", Iwamizawa: "이와미자와" };
 const KEYS = {
-  powder: { icon: "❄️", ja: "パウダーの日", en: "Powder days", sub_ja: "雪の日のうち、日平均気温 −5℃以下（軽く乾いた雪）", sub_en: "Snow days with daily mean ≤ −5 °C (light, dry snow)", ko: "파우더의 날", sub_ko: "눈 온 날 중 일평균 기온 −5℃ 이하 (가볍고 마른 눈)", unit_ko: "일", unit: "日", unit_en: "days", color: "--powder" },
-  heavy: { icon: "💧", ja: "重い雪の日", en: "Heavy-snow days", sub_ja: "雪の日のうち、日平均気温 −2℃より暖かい（水分が多い雪）", sub_en: "Snow days with daily mean > −2 °C (wet, heavy snow)", ko: "무거운 눈의 날", sub_ko: "눈 온 날 중 일평균 기온 −2℃보다 따뜻함 (물기 많은 눈)", unit_ko: "일", unit: "日", unit_en: "days", color: "--heavy" },
-  icy: { icon: "🧊", ja: "つるつる路面の日", en: "Icy-road days", sub_ja: "最高気温0℃超・最低気温0℃未満（昼に溶けて夜に凍る）", sub_en: "Max > 0 °C and min < 0 °C (melts by day, refreezes at night)", ko: "빙판길 날", sub_ko: "최고 기온 0℃ 초과·최저 기온 0℃ 미만 (낮에 녹고 밤에 얼어요)", unit_ko: "일", unit: "日", unit_en: "days", color: "--icy" },
+  powder: { icon: "❄️", ja: "パウダーの日", en: "Powder days", sub_ja: "雪の日のうち、日平均気温 −5℃以下（軽く乾いた雪）", sub_en: "Snow days with daily mean ≤ −5 °C (light, dry snow)", ko: "파우더의 날", sub_ko: "눈 온 날 중 일평균 기온 −5℃ 이하 (가볍고 마른 눈)", unit_ko: "일", unit: "日", unit_en: " days", color: "--powder" },
+  heavy: { icon: "💧", ja: "重い雪の日", en: "Heavy-snow days", sub_ja: "雪の日のうち、日平均気温 −2℃より暖かい（水分が多い雪）", sub_en: "Snow days with daily mean > −2 °C (wet, heavy snow)", ko: "무거운 눈의 날", sub_ko: "눈 온 날 중 일평균 기온 −2℃보다 따뜻함 (물기 많은 눈)", unit_ko: "일", unit: "日", unit_en: " days", color: "--heavy" },
+  icy: { icon: "🧊", ja: "つるつる路面の日", en: "Icy-road days", sub_ja: "最高気温0℃超・最低気温0℃未満（昼に溶けて夜に凍る）", sub_en: "Max > 0 °C and min < 0 °C (melts by day, refreezes at night)", ko: "빙판길 날", sub_ko: "최고 기온 0℃ 초과·최저 기온 0℃ 미만 (낮에 녹고 밤에 얼어요)", unit_ko: "일", unit: "日", unit_en: " days", color: "--icy" },
   spring: { icon: "🛰️", ja: "4月に残る雪（衛星）", en: "April snow cover (satellite)", sub_ja: "NASA MODIS衛星で見た、4月に雪でおおわれた土地の割合（2001〜2026年）", sub_en: "Share of land under snow in April, seen by NASA's MODIS satellite (2001–2026)", ko: "4월에 남는 눈 (위성)", sub_ko: "NASA MODIS 위성으로 본, 4월에 눈으로 덮인 땅의 비율 (2001~2026년)", unit_ko: "%", unit: "%", unit_en: "%", color: "--blue", sat: "cov_apr" },
-  storm: { icon: "💥", ja: "重い大雪・大雨の日（JAXA衛星）", en: "Wet heavy-storm days (JAXA satellite)", ko: "무거운 폭설·폭우 날 (JAXA 위성)", sub_ja: "JAXA衛星の降水が1日10mm以上で、日平均気温が−2℃より暖かい日（2001〜2026年、最寄りの観測所）", sub_en: "Days with ≥ 10 mm of JAXA satellite precipitation and a daily mean warmer than −2 °C (2001–2026, nearest station)", sub_ko: "JAXA 위성 강수가 하루 10mm 이상이고 일평균 기온이 −2℃보다 따뜻한 날 (2001~2026년, 가장 가까운 관측소)", unit: "日", unit_en: "days", unit_ko: "일", color: "--heavy", sat: "storm_wet", stOnly: true },
+  storm: { icon: "💥", ja: "重い大雪・大雨の日（JAXA衛星）", en: "Wet heavy-storm days (JAXA satellite)", ko: "무거운 폭설·폭우 날 (JAXA 위성)", sub_ja: "JAXA衛星の降水が1日10mm以上で、日平均気温が−2℃より暖かい日（2001〜2026年、最寄りの観測所）", sub_en: "Days with ≥ 10 mm of JAXA satellite precipitation and a daily mean warmer than −2 °C (2001–2026, nearest station)", sub_ko: "JAXA 위성 강수가 하루 10mm 이상이고 일평균 기온이 −2℃보다 따뜻한 날 (2001~2026년, 가장 가까운 관측소)", unit: "日", unit_en: " days", unit_ko: "일", color: "--heavy", sat: "storm_wet", stOnly: true },
   share: { icon: "📊", ja: "雪のうちパウダーの割合", en: "Share of powder", sub_ja: "雪の日全体に占めるパウダーの日の割合", sub_en: "Powder days as a share of all snow days", ko: "눈 중 파우더 비율", sub_ko: "눈 온 날 전체 중 파우더의 날 비율", unit_ko: "%", unit: "%", unit_en: "%", color: "--powder" },
 };
 // What to DO with each robust finding (who uses it and how)
@@ -438,7 +438,10 @@ async function loadForecast(p) {
     const u = `https://api.open-meteo.com/v1/forecast?latitude=${p.la}&longitude=${p.lo}&daily=temperature_2m_mean,temperature_2m_max,temperature_2m_min,snowfall_sum,rain_sum&timezone=Asia%2FTokyo&forecast_days=7`;
     let j = null;
     for (let k = 0; k < 3 && !j; k++) { try { j = await (await fetch(u)).json(); } catch (e) { await new Promise(r => setTimeout(r, 1500)); } }
-    if (key !== fcKey) return; FC = j && j.daily ? j.daily : { error: true };
+    if (key !== fcKey) return;
+    // keep the last good forecast so a live demo still works if the forecast server is unreachable
+    if (j && j.daily) { FC = j.daily; try { localStorage.setItem("fc:" + key, JSON.stringify({ t: Date.now(), d: j.daily })); } catch (e) {} }
+    else { let c = null; try { c = JSON.parse(localStorage.getItem("fc:" + key)); } catch (e) {} FC = c ? Object.assign(c.d, { cachedAt: c.t }) : { error: true }; }
   } catch (e) { FC = { error: true }; }
   renderForecast();
 }
@@ -463,9 +466,9 @@ function renderForecast() {
     const dt = new Date(t + "T00:00:00"), c = fcClass(FC, i);
     return `<div class="fcd ${c.some(x => x[0] === "warn") ? "warn" : c[0][0]}"><div class="dd">${i === 0 ? T("今日", "Today", "오늘") : `${dt.getMonth() + 1}/${dt.getDate()}(${wd[dt.getDay()]})`}</div>
       <div class="ic">${c.map(x => x[1]).join("")}</div><div class="lb">${c.map(x => x[2]).join("<br>")}</div>
-      <div class="tt">${fmt(FC.temperature_2m_min[i], 0)}〜${fmt(FC.temperature_2m_max[i], 0)}℃${FC.snowfall_sum[i] > 0 ? ` · ❄${fmt(FC.snowfall_sum[i], 0)}cm` : ""}</div></div>`;
+      <div class="tt">${fmt(FC.temperature_2m_min[i], 0)}${T("〜", "–", "~")}${fmt(FC.temperature_2m_max[i], 0)}℃${FC.snowfall_sum[i] > 0 ? ` · ❄${fmt(FC.snowfall_sum[i], 0)}cm` : ""}</div></div>`;
   }).join("");
-  note.innerHTML = T("35年のカルテと同じ決まり（雪の日の平均気温 −5℃以下＝パウダー、−2℃より暖かい＝重い雪、最高0℃超・最低0℃未満＝つるつる）で判定。⚠️は「雨やぬれた雪のあと、−2℃以下まで冷えて凍る」日で、札幌で転倒が特に多かった日の条件です。予報：Open-Meteo（気象機関の数値予報モデル）。",
+  note.innerHTML = (FC.cachedAt ? `<b>${T("予報サーバーにつながらないため、前回読みこんだ予報を表示しています", "Forecast server unreachable — showing the last forecast loaded", "예보 서버에 연결되지 않아 지난번에 불러온 예보를 보여 줍니다")} (${new Date(FC.cachedAt).toLocaleString()})</b><br>`) : "") + T("35年のカルテと同じ決まり（雪の日の平均気温 −5℃以下＝パウダー、−2℃より暖かい＝重い雪、最高0℃超・最低0℃未満＝つるつる）で判定。⚠️は「雨やぬれた雪のあと、−2℃以下まで冷えて凍る」日で、札幌で転倒が特に多かった日の条件です。予報：Open-Meteo（気象機関の数値予報モデル）。",
     "Same rules as the 35-year chart (snow day mean ≤ −5 °C = powder, > −2 °C = heavy, max > 0 °C and min < 0 °C = icy). ⚠️ marks rain or wet snow followed by a freeze to −2 °C or below — the conditions of Sapporo's worst fall days. Forecast: Open-Meteo (national weather service models).", "35년 카르테와 같은 규칙(눈 온 날 평균 기온 −5℃ 이하 = 파우더, −2℃보다 따뜻함 = 무거운 눈, 최고 0℃ 초과·최저 0℃ 미만 = 빙판길)으로 판정. ⚠️는 「비나 젖은 눈 뒤에 −2℃ 이하로 얼어붙는」 날로, 삿포로에서 낙상이 특히 많았던 날의 조건입니다. 예보: Open-Meteo (기상기관 수치예보 모델).");
 }
 
