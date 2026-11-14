@@ -168,6 +168,9 @@ function choose(la, lo, label, opt = {}) {
   if (p.out) loadWorld(p).then(w => { p.world = w; if (places[0] === p) { render(); if (window.GLOBE) globeMark(); } }).catch(() => { p.world = { error: true }; if (places[0] === p) render(); });
   if (window.GLOBE) globeMark();
   if (D) renderHud();
+  // bring the map and the globe to the chosen place
+  if (map && !map.getBounds().pad(-0.1).contains([la, lo])) map.flyTo([la, lo], p.out ? 6 : Math.max(map.getZoom(), 7), { duration: 0.8 });
+  if (window.GLOBE && !opt.quiet) window.GLOBE.pointOfView({ lat: la - 1.5, lng: lo, altitude: 1.3 }, 1400);
   if (!cmp && VIEW === "home" && !opt.quiet) document.getElementById("places").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
