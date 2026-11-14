@@ -88,7 +88,8 @@ async function reverseName(p) {
     p.geo[lang] = j.countryName ? [j.city || j.locality, j.principalSubdivision, j.countryName].filter(Boolean).filter((x, i, arr) => arr.indexOf(x) === i).join(" · ")
       : (j.locality || T("海の上", "At sea", "바다 위")) + ` (${p.la.toFixed(2)}, ${p.lo.toFixed(2)})`;
   } catch (e) { p.geo[lang] = `${p.la.toFixed(2)}, ${p.lo.toFixed(2)}`; }
-  if (places.includes(p)) { renderPlaces(); renderEntries(places[0]); renderSummary(); markers.forEach((m, i) => m.setTooltipContent(placeLabel(places[i]))); }
+  if (places[0] && places[0].out) { if (places.includes(p)) render(); }
+  else if (places.includes(p)) { renderPlaces(); renderEntries(places[0]); renderSummary(); markers.forEach((m, i) => m.setTooltipContent(placeLabel(places[i]))); }
 }
 function placeLabel(p) {
   if (p.q != null) { const q = QUICK[p.q]; return T(q[0], q[1], q[4]); }
@@ -108,6 +109,8 @@ function choose(la, lo, label, opt = {}) {
   markers.forEach(m => map.removeLayer(m));
   markers = places.map((q, i) => L.circleMarker([q.la, q.lo], { radius: 9, color: i ? css("--heavy") : css("--blue"), weight: 3, fillOpacity: .3 }).addTo(map).bindTooltip(placeLabel(q)));
   render(); loadForecast(places[0]);
+  if (p.out) loadWorld(p).then(w => { p.world = w; if (places[0] === p) { render(); if (window.GLOBE) globeMark(); } }).catch(() => { p.world = { error: true }; if (places[0] === p) render(); });
+  if (window.GLOBE) globeMark();
   if (!cmp && VIEW === "home" && !opt.quiet) document.getElementById("places").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -256,6 +259,7 @@ function renderSat() {
   if (y < 2001) { note.textContent = T(`${y}年の冬はまだ衛星（MODIS、2000年打ち上げ）がありません。2001年以降を選んでください。`, `No MODIS satellite yet in winter ${y} (launched 2000). Pick 2001 or later.`, `${y}년 겨울에는 아직 MODIS 위성이 없습니다(2000년 발사). 2001년 이후를 골라 주세요.`); return; }
   let ym = `${y}-${satMonth}`; if (ym === "2016-02") ym = "2016-01";
   satLayer = new SatLayer({ time: ym + "-01", maxNativeZoom: 6, maxZoom: 9, opacity: 1, attribution: "NASA GIBS / MODIS" }).addTo(satMap);
+  if (places[0] && places[0].out) { note.textContent = T(`${ym.replace("-", "年")}月の NASA MODIS 月平均の雪（濃い青ほど一か月ずっと雪）。`, `${ym}: NASA MODIS monthly snow cover (darker blue = snow all month).`, `${ym}: NASA MODIS 월평균 눈 덮임 (진한 파랑일수록 한 달 내내 눈).`); return; }
   const k = satMonth === "04" ? "cov_apr" : "cov_feb", i = D.winters.indexOf(y), v = D.hokkaido.series[k][i], last = D.hokkaido.series[k][D.winters.length - 1];
   const m0 = D.hokkaido.series[k].slice(D.winters.indexOf(2001), D.winters.indexOf(2001) + 10);
   note.textContent = T(`${ym.replace("-", "年")}月：北海道の陸地の${fmt(v, 0)}%が雪（濃い青ほど一か月ずっと雪）。2000年代（2001〜2010年）平均${fmt(mean(m0), 0)}%、最新（2026年）${fmt(last, 0)}%。`,
@@ -287,8 +291,8 @@ function trustHTML(p) {
 function placeCard(q, i) {
   const away = fmt(km(q.la, q.lo, q.cell.lat, q.cell.lon), 0);
   return `<div class="card place ${i ? "b" : ""}"><h3>${placeLabel(q)}</h3>
-    ${q.out ? `<p class="out">${T(`北海道の外です。いちばん近い北海道のデータ（${away}km先）を表示しています。`, `Outside Hokkaido — showing the nearest Hokkaido data (${away} km away).`, `홋카이도 밖입니다. 가장 가까운 홋카이도 자료(${away}km 떨어짐)를 보여 줍니다.`)}</p>` : ""}
-    <p>${T(`最寄りの地上観測：気象庁${q.st.ja}（${fmt(q.dist, 0)}km）・NASAのマス：北緯${q.cell.lat}° 東経${q.cell.lon}°`, `Nearest ground station: JMA ${q.st.en} (${fmt(q.dist, 0)} km) · NASA cell ${q.cell.lat}°N ${q.cell.lon}°E`, `가장 가까운 지상 관측소: 기상청 ${STKO[q.st.en] || q.st.en} (${fmt(q.dist, 0)}km) · NASA 칸: 북위 ${q.cell.lat}° 동경 ${q.cell.lon}°`)}</p></div>`;
+    ${q.out ? `<p class="out">${T("🌍 世界モード：NASA POWERの35年分を、この場所で直接計算しています。", "🌍 World mode: 35 years of NASA POWER data computed for this exact spot.", "🌍 세계 모드: NASA POWER 35년 치를 이 장소에서 직접 계산합니다.")}</p><p>${T(`北緯${q.la.toFixed(2)}° 東経${q.lo.toFixed(2)}° · 地上観測なし`, `${q.la.toFixed(2)}°, ${q.lo.toFixed(2)}° · no ground station`, `위도 ${q.la.toFixed(2)}° 경도 ${q.lo.toFixed(2)}° · 지상 관측 없음`)}</p></div>` : ""}
+    ${q.out ? "" : `<p>${T(`最寄りの地上観測：気象庁${q.st.ja}（${fmt(q.dist, 0)}km）・NASAのマス：北緯${q.cell.lat}° 東経${q.cell.lon}°`, `Nearest ground station: JMA ${q.st.en} (${fmt(q.dist, 0)} km) · NASA cell ${q.cell.lat}°N ${q.cell.lon}°E`, `가장 가까운 지상 관측소: 기상청 ${STKO[q.st.en] || q.st.en} (${fmt(q.dist, 0)}km) · NASA 칸: 북위 ${q.cell.lat}° 동경 ${q.cell.lon}°`)}</p></div>`}`;
 }
 function renderPlaces() {
   document.getElementById("places").innerHTML = places.map(placeCard).join("");
@@ -351,11 +355,129 @@ function summaryHTML(p) {
     ${fcLine}<p class="note">${T("✅＝北海道全体で偶然とは言えない変化。数字はこの街の古い10年 → 最近10年の平均。", "✅ = change across Hokkaido that chance cannot explain. Numbers: this town, older 10 years → latest 10 years.", "✅ = 홋카이도 전체에서 우연으로 설명되지 않는 변화. 숫자는 이 동네의 앞 10년 → 최근 10년 평균.")}
     <a class="link-in" href="#/karte">${T("雪質カルテを見る →", "Open the snow chart →", "눈 품질 카르테 보기 →")}</a></p>`;
 }
-function renderSummary() { if (places.length) document.querySelectorAll(".summary").forEach(el => (el.innerHTML = summaryHTML(places[0]))); }
+function renderSummary() { if (places.length && !places[0].out) document.querySelectorAll(".summary").forEach(el => (el.innerHTML = summaryHTML(places[0]))); }
+
+
+// =====================================================================
+// World mode: any point on Earth, 35 winters computed live in the browser
+// from NASA POWER daily data (MERRA-2). Same rules as the Hokkaido chart.
+// Northern hemisphere winter = Dec–Mar (labelled by January), southern = Jun–Sep.
+// =====================================================================
+const WORLD_CACHE = {};
+function erfc(x) { const z = Math.abs(x), t = 1 / (1 + 0.5 * z), r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277))))))))); return x >= 0 ? r : 2 - r; }
+function mkJS(x) {
+  const v = x.map((a, i) => [i, a]).filter(q => q[1] != null), n = v.length; if (n < 10) return null;
+  let S = 0; const sl = [], ties = {};
+  for (let i = 0; i < n - 1; i++) for (let j = i + 1; j < n; j++) { const d = v[j][1] - v[i][1]; S += Math.sign(d); sl.push(d / (v[j][0] - v[i][0])); }
+  v.forEach(q => (ties[q[1]] = (ties[q[1]] || 0) + 1));
+  const varS = (n * (n - 1) * (2 * n + 5) - Object.values(ties).reduce((a, t) => a + t * (t - 1) * (2 * t + 5), 0)) / 18;
+  const z = S === 0 ? 0 : (S - Math.sign(S)) / Math.sqrt(varS);
+  sl.sort((a, b) => a - b); const m = sl.length, sen = m % 2 ? sl[(m - 1) / 2] : (sl[m / 2 - 1] + sl[m / 2]) / 2;
+  return { p: erfc(Math.abs(z) / Math.SQRT2), slope10: sen * 10, n };
+}
+async function loadWorld(p) {
+  const key = `${p.la.toFixed(2)},${p.lo.toFixed(2)}`;
+  if (WORLD_CACHE[key]) return WORLD_CACHE[key];
+  const u = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M,T2M_MAX,T2M_MIN,PRECSNOLAND,WS2M&community=AG&latitude=${p.la.toFixed(3)}&longitude=${p.lo.toFixed(3)}&start=19910501&end=20260430&format=JSON`;
+  const j = await (await fetch(u)).json();
+  const P = j.properties.parameter, south = p.la < 0, ok = v => (v == null || v <= -900 ? null : v);
+  const months = south ? ["06", "07", "08", "09"] : ["12", "01", "02", "03"];
+  const W = south ? Array.from({ length: 35 }, (_, i) => 1991 + i) : Array.from({ length: 35 }, (_, i) => 1992 + i);
+  const inWinter = (k, w) => (south ? k.slice(0, 4) === String(w) && months.includes(k.slice(4, 6)) : (k.slice(0, 4) === String(w - 1) && k.slice(4, 6) === "12") || (k.slice(0, 4) === String(w) && ["01", "02", "03"].includes(k.slice(4, 6))));
+  const S = { snow_days: [], powder: [], heavy: [], icy: [], share: [], tmean: [], cold_t: [], cold_wc: [], cold_date: [] };
+  for (const w of W) {
+    const ks = Object.keys(P.T2M).filter(k => inWinter(k, w));
+    if (ks.length < 100) { Object.keys(S).forEach(k => S[k].push(null)); continue; }
+    let sd = 0, pw = 0, hv = 0, ic = 0, tsum = 0, tn = 0, cold = null;
+    for (const k of ks) {
+      const tm = ok(P.T2M[k]), tx = ok(P.T2M_MAX[k]), tl = ok(P.T2M_MIN[k]), sn = ok(P.PRECSNOLAND[k]), ws = ok(P.WS2M[k]);
+      if (tm != null) { tsum += tm; tn++; }
+      if (sn != null && sn >= 1) { sd++; if (tm != null && tm <= -5) pw++; if (tm != null && tm > -2) hv++; }
+      if (tx != null && tl != null && tx > 0 && tl < 0) ic++;
+      if (tl != null && (!cold || tl < cold[0])) cold = [tl, ws, k];
+    }
+    S.snow_days.push(sd); S.powder.push(pw); S.heavy.push(hv); S.icy.push(ic); S.share.push(sd ? Math.round(1000 * pw / sd) / 10 : null); S.tmean.push(tn ? tsum / tn : null);
+    if (cold) { const [t, v, k] = cold, kmh = Math.max((v || 0) * 3.6, 4.8); S.cold_t.push(t); S.cold_wc.push(Math.round(10 * (13.12 + 0.6215 * t - 11.37 * kmh ** 0.16 + 0.3965 * t * kmh ** 0.16)) / 10); S.cold_date.push(`${k.slice(0, 4)}-${k.slice(4, 6)}-${k.slice(6)}`); }
+    else { S.cold_t.push(null); S.cold_wc.push(null); S.cold_date.push(null); }
+  }
+  const T = {}; ["snow_days", "powder", "heavy", "icy", "share", "tmean"].forEach(k => (T[k] = mkJS(S[k])));
+  const snowy = mean(S.snow_days) ?? 0;
+  return (WORLD_CACHE[key] = { winters: W, series: S, trend: T, south, snowy, elev: j.geometry && j.geometry.coordinates ? j.geometry.coordinates[2] : null });
+}
+const WKEYS = ["heavy", "powder", "icy", "share"];
+const wMark = t => (t && t.p < 0.05 ? "ok" : t && t.p < 0.1 ? "mid" : "no");
+const wBadge = t => ({ ok: T("✅ NASAデータで有意", "✅ Significant in NASA data", "✅ NASA 자료에서 유의"), mid: T("🟡 傾向あり（p<0.1）", "🟡 Likely (p < 0.1)", "🟡 경향 있음 (p < 0.1)"), no: T("⚪ まだ言えない", "⚪ Not yet clear", "⚪ 아직 말할 수 없음") }[wMark(t)]);
+function worldNote(p) {
+  return T(`世界モード：この場所はNASA POWER（約50kmの格子、MERRA-2）だけで計算しています。気象庁の観測・衛星の確かめは北海道だけです。${p.world.south ? "南半球なので6〜9月を冬としています。" : ""}`,
+    `World mode: computed from NASA POWER only (~50 km grid, MERRA-2). Ground-station and satellite checks exist for Hokkaido only.${p.world.south ? " Southern hemisphere: winter = Jun–Sep." : ""}`,
+    `세계 모드: 이 장소는 NASA POWER(약 50km 격자, MERRA-2)만으로 계산했습니다. 기상청 관측·위성 확인은 홋카이도만 있습니다.${p.world.south ? " 남반구라서 6~9월을 겨울로 봅니다." : ""}`);
+}
+function worldLoadingHTML() { return `<div class="card loading"><span class="spin"></span>${T("NASAの35年分のデータを取得中…（10秒ほど）", "Fetching 35 years of NASA data… (about 10 s)", "NASA 35년 치 데이터를 받는 중… (10초쯤)")}</div>`; }
+function worldCardHTML(k, p, idx) {
+  const K = k === "tmean" ? { icon: "🌡️", ja: "冬の平均気温", en: "Winter mean temperature", ko: "겨울 평균기온", sub_ja: "冬（雪の季節）の毎日の平均気温の平均", sub_en: "Average of daily mean temperatures in winter", sub_ko: "겨울 매일 평균기온의 평균", unit: "℃", unit_en: " °C", unit_ko: "℃" } : KEYS[k];
+  const ser = p.world.series[k], tr = p.world.trend[k], a = mean(ser.slice(0, 10)), b = mean(ser.slice(-10)), unit = T(K.unit, K.unit_en, K.unit_ko), dg = k === "tmean" ? 1 : 0;
+  const arrow = tr ? (tr.slope10 > 0 ? "↑" : tr.slope10 < 0 ? "↓" : "→") : "";
+  return `<div class="card kc"><h3>${K.icon} ${T(K.ja, K.en, K.ko)}</h3><div class="sub">${T(K.sub_ja, K.sub_en, K.sub_ko)}</div><div class="here mono">${T("この場所", "This place", "이 장소")} · ${placeLabel(p)}</div>
+  <div class="nums"><span>${T("1990年代", "1990s", "1990년대")} <b class="big">${fmt(a, dg)}</b>${unit}</span><span>→ ${T("2020年代", "2020s", "2020년대")} <b class="big">${fmt(b, dg)}</b>${unit}</span>
+  <span class="arrow">${arrow} ${tr ? fmt(tr.slope10, k === "tmean" ? 2 : 1) : "–"}${unit}/${T("10年", "decade", "10년")}</span></div>
+  <div class="cbox"><canvas id="c${idx}"></canvas></div><span class="badge ${wMark(tr)} small">${wBadge(tr)}</span>
+  <div class="cmpline">NASA POWER · ${tr ? "p=" + fmt(tr.p, 2) : "–"}</div></div>`;
+}
+function renderWorld(p) {
+  const cards = document.getElementById("cards"), tm = document.getElementById("tm"), sum = document.querySelectorAll(".summary");
+  if (!p.world) {
+    cards.innerHTML = worldLoadingHTML(); tm.innerHTML = worldLoadingHTML(); sum.forEach(el => (el.innerHTML = worldLoadingHTML()));
+    document.getElementById("proj").innerHTML = worldLoadingHTML(); document.getElementById("entries").innerHTML = ""; return;
+  }
+  if (p.world.error) { const m = `<div class="card">${T("NASAのデータを取得できませんでした。少し待ってからもう一度選んでください。", "Could not fetch NASA data. Please try again in a moment.", "NASA 데이터를 가져오지 못했습니다. 잠시 후 다시 골라 주세요.")}</div>`; cards.innerHTML = m; sum.forEach(el => (el.innerHTML = m)); return; }
+  const W = p.world, keys = W.snowy >= 3 ? [...WKEYS, "tmean"] : ["tmean"];
+  // summary
+  const tt = W.trend.tmean, hv = W.trend.heavy, pw = W.trend.powder;
+  const head = W.snowy < 3 ? T("ここは、雪がほとんど降らない場所です。", "Snow is rare here.", "여기는 눈이 거의 내리지 않는 곳입니다.")
+    : hv && hv.slope10 > 0 && wMark(hv) !== "no" ? T("ここでも、雪は重くなる方向です。", "Here too, snow is turning heavier.", "여기서도 눈은 무거워지는 방향입니다.")
+    : pw && pw.slope10 < 0 && wMark(pw) !== "no" ? T("ここでは、パウダーが減る方向です。", "Here, powder days are falling.", "여기서는 파우더가 줄어드는 방향입니다.")
+    : T("ここでは、雪の質の変化はまだはっきりしません。", "Here, no clear change in snow quality yet.", "여기서는 눈 품질 변화가 아직 뚜렷하지 않습니다.");
+  const mk = { ok: "✅", mid: "🟡", no: "⚪" }, arrow = d => (d > 0 ? "↑" : d < 0 ? "↓" : "→");
+  const row = k => { const K = k === "tmean" ? { icon: "🌡️", ja: "冬の平均気温", en: "Winter mean temperature", ko: "겨울 평균기온", unit: "℃", unit_en: " °C", unit_ko: "℃" } : KEYS[k], s = W.series[k], a = mean(s.slice(0, 10)), b = mean(s.slice(-10)), t = W.trend[k];
+    return `<li class="${wMark(t)}"><span class="m">${mk[wMark(t)]}</span><span class="n">${K.icon} ${T(K.ja, K.en, K.ko)}</span><b class="mono">${arrow(Math.sign((b ?? 0) - (a ?? 0)))} ${fmt(a, k === "tmean" ? 1 : 0)} → ${fmt(b, k === "tmean" ? 1 : 0)}${T(K.unit, K.unit_en, K.unit_ko)}</b></li>`; };
+  sum.forEach(el => (el.innerHTML = `<p class="lbl mono">${T("ひとことで · 世界モード", "In a nutshell · world mode", "한눈에 요약 · 세계 모드")}</p><h2 class="sum-h">${head}</h2>
+    <p class="sum-sub">${placeLabel(p)} · ${T("冬の気温", "winter temperature", "겨울 기온")} ${tt ? (tt.slope10 >= 0 ? "+" : "") + fmt(tt.slope10, 2) + T("℃/10年", " °C/decade", "℃/10년") : "–"}</p>
+    <ul class="sum">${keys.map(row).join("")}</ul><p class="note">${worldNote(p)}</p>`));
+  cards.innerHTML = keys.map((k, i) => worldCardHTML(k, p, i)).join("") + `<div class="card notyet"><p class="note">${worldNote(p)}</p></div>`;
+  if (VIEW === "karte") keys.forEach((k, i) => {
+    chartRefs.push(new Chart(document.getElementById("c" + i), { type: "line", data: { labels: W.winters, datasets: [{ label: "NASA POWER", data: W.series[k], borderColor: css(k === "tmean" ? "--heavy" : (KEYS[k] || {}).color || "--blue"), pointRadius: 0, borderWidth: 2, tension: .25 }] },
+      options: { animation: false, maintainAspectRatio: false, plugins: { legend: { labels: { boxWidth: 10, font: { size: 11 }, color: css("--muted") } } }, scales: { x: { ticks: { maxTicksLimit: 6, color: css("--muted") }, grid: { display: false } }, y: { beginAtZero: k !== "tmean", ticks: { color: css("--muted"), maxTicksLimit: 4 }, grid: { color: css("--line") } } } } }));
+  });
+  // entries
+  const hs = W.series.heavy, f = senFit(hs, W.winters[0]), ts = W.series.tmean;
+  document.getElementById("entries").innerHTML = [["karte", T("雪質カルテ", "Snow chart", "눈 품질 카르테"), T("重い雪の日", "Heavy-snow days", "무거운 눈의 날"), `${fmt(mean(hs.slice(0, 10)), 0)} → ${fmt(mean(hs.slice(-10)), 0)}${T("日", " days", "일")}`, T("1990年代 → 2020年代", "1990s → 2020s", "1990년대 → 2020년대")],
+    ["future", T("未来をのぞく", "2050 preview", "미래 엿보기"), T("2050年の重い雪の日", "Heavy-snow days in 2050", "2050년 무거운 눈의 날"), `${f ? fmt(Math.max(0, f.at(2050)), 0) : "–"}${T("日", " days", "일")}`, T("今の傾きのまま（予報ではない）", "if today's trend continues (not a forecast)", "지금 기울기 그대로 (예보 아님)")],
+    ["time", T("冬のタイムマシン", "Time machine", "겨울 타임머신"), T("冬の平均気温", "Winter mean temperature", "겨울 평균기온"), `${fmt(mean(ts.slice(0, 10)), 1)} → ${fmt(mean(ts.slice(-10)), 1)}℃`, T("1990年代 → 2020年代", "1990s → 2020s", "1990년대 → 2020년대")]]
+    .map(([v, t, k, n, sub]) => `<a class="entry" href="#/${v}"><div class="et"><h3>${t}</h3><p class="note">${placeLabel(p)}</p></div><div class="estat"><span class="k mono">${k}</span><b class="mono">${n}</b><span class="note">${sub}</span></div><span class="go mono">→</span></a>`).join("");
+  // 2050
+  const pj = [["heavy", hs], ["tmean", ts]].map(([k, ser]) => {
+    const g = senFit(ser, W.winters[0]); if (!g) return "";
+    const isT = k === "tmean", unit = isT ? T("℃", " °C", "℃") : T("日", " days", "일"), now = mean(ser.slice(-10)), mid = isT ? g.at(2050) : Math.max(0, g.at(2050));
+    const lo = g.ym + g.lo * (2050 - g.xm), hi = g.ym + g.hi * (2050 - g.xm);
+    return `<div class="pj"><div class="k">${isT ? "🌡️ " + T("冬の平均気温", "Winter mean temperature", "겨울 평균기온") : KEYS.heavy.icon + " " + T(KEYS.heavy.ja, KEYS.heavy.en, KEYS.heavy.ko)}</div><div class="v">${fmt(mid, isT ? 1 : 0)}${unit}</div>
+      <div class="note">${T("2020年代", "2020s", "2020년대")} ${fmt(now, isT ? 1 : 0)}${unit} → 2050 ${fmt(isT ? lo : Math.max(0, lo), isT ? 1 : 0)}–${fmt(isT ? hi : Math.max(0, hi), isT ? 1 : 0)}${unit}</div></div>`;
+  }).join("");
+  document.getElementById("proj").innerHTML = `<h2>${T("このままの傾きが続いたら。", "If the trend simply continues.", "지금 기울기가 그대로 이어진다면.")}</h2><div class="proj-grid">${pj}</div><p class="note">${worldNote(p)} ${T("予報ではなく、今の傾きをのばした目安です。", "Not a forecast — today's trend extended.", "예보가 아니라 지금 기울기를 늘린 기준입니다.")}</p>`;
+  // time machine (no snow-depth record outside Hokkaido: coldest morning + winter temperature)
+  const i = Math.max(0, W.winters.indexOf(tmYear)), j = W.winters.length - 1, S = W.series;
+  const one = (k, lab) => `<div class="tmc"><div class="t"><p>${lab}</p><b>${fmt(S.tmean[k], 1)}℃</b><p>${T("冬の平均気温", "Winter mean temperature", "겨울 평균기온")}</p>
+    <p>${T("いちばん寒い朝", "Coldest morning", "가장 추운 아침")} (${S.cold_date[k] || "–"})：${fmt(S.cold_t[k])}℃ → ${T("体感", "feels like", "체감")} <b style="display:inline;font-size:18px">${fmt(S.cold_wc[k])}℃</b></p></div></div>`;
+  tm.innerHTML = one(i, T(`${W.winters[i]}年の冬`, `Winter ${W.winters[i]}`, `${W.winters[i]}년 겨울`)) + (i !== j ? one(j, T(`${W.winters[j]}年の冬（最新）`, `Winter ${W.winters[j]} (latest)`, `${W.winters[j]}년 겨울 (최신)`)) : "")
+    + `<p class="note">${T("北海道の外は積雪の深さの記録がないため、気温と体感温度を見せています。", "Outside Hokkaido there is no snow-depth record here, so temperature and wind chill are shown.", "홋카이도 밖은 적설 기록이 없어 기온과 체감 온도를 보여 줍니다.")}</p>`;
+  if (VIEW === "time" && satMap) { satMap.setView([p.la, p.lo], 5); renderSat(); }
+  document.getElementById("tips").innerHTML = `<p class="note">${worldNote(p)}</p>`;
+  document.getElementById("trust").innerHTML = `<ul><li>${T("NASA POWER（MERRA-2再解析）の日別データを、このページで直接取得して計算", "NASA POWER (MERRA-2) daily data fetched and computed in this page", "NASA POWER(MERRA-2) 일별 자료를 이 페이지에서 직접 받아 계산")}</li><li>${T("検定：冬ごとの値にマン・ケンドール検定とセン傾き（北海道と同じ）", "Test: Mann–Kendall and Sen's slope on one value per winter (same as Hokkaido)", "검정: 겨울마다 값 하나로 맨-켄달 검정과 센 기울기 (홋카이도와 같음)")}</li></ul>`;
+}
 
 function render() {
   chartRefs.forEach(c => c.destroy()); chartRefs = [];
   const [p, p2] = places;
+  if (p.out) { renderPlaces(); return renderWorld(p); }
   renderPlaces(); renderEntries(p); renderSummary();
   const keys = ROBUST;
   document.getElementById("cards").innerHTML = keys.map((k, i) => cardHTML(k, p, i)).join("") + notYetHTML(p);
@@ -621,7 +743,9 @@ async function init() {
   sl.oninput = () => { tmYear = +sl.value; if (places.length) render(); };
   document.querySelectorAll(".tm-ctl .chip").forEach(b => (b.onclick = () => { tmYear = +b.dataset.y; if (places.length) render(); }));
   applyLang();
-  choose(QUICK[0][2], QUICK[0][3], null, { q: 0, quiet: true });
+  // a place can be given in the link: #/karte?p=lat,lon  (handy for sharing a town or a judge's home)
+  const qp = (location.hash.match(/[?&]p=(-?[\d.]+),(-?[\d.]+)/) || []);
+  if (qp.length) choose(+qp[1], +qp[2], null, { quiet: true }); else choose(QUICK[0][2], QUICK[0][3], null, { q: 0, quiet: true });
   window.addEventListener("hashchange", route);
   document.addEventListener("click", e => { const a = e.target.closest("[data-go]"); if (!a) return; e.preventDefault(); route.go = a.dataset.go; if (VIEW === "home") route(); else location.hash = "#/"; });
   route();
