@@ -200,3 +200,13 @@ footer p{margin:4px 0}
   .estat{grid-column:1;grid-row:2;text-align:left;border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:10px}
   .entry .go{grid-column:2;grid-row:1}
 }
+
+/* summary */
+.summary .sum-h{font-size:clamp(22px,2.6vw,30px);margin:0 0 14px}
+ul.sum{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+ul.sum li{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+ul.sum li.no{color:var(--muted)}
+ul.sum li b{font-size:14px;font-weight:600;white-space:nowrap}
+.sum-fc{margin:12px 0 0;font-weight:700;font-size:14.5px}
+.link-in{display:inline-block;margin-left:6px;font:600 12px var(--mono);color:var(--ink);text-underline-offset:4px}
+.places{margin-bottom:14px}

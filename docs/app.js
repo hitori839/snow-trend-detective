@@ -79,7 +79,7 @@ async function reverseName(p) {
     p.geo[lang] = j.countryName ? [j.city || j.locality, j.principalSubdivision, j.countryName].filter(Boolean).filter((x, i, arr) => arr.indexOf(x) === i).join(" · ")
       : (j.locality || T("海の上", "At sea", "바다 위")) + ` (${p.la.toFixed(2)}, ${p.lo.toFixed(2)})`;
   } catch (e) { p.geo[lang] = `${p.la.toFixed(2)}, ${p.lo.toFixed(2)}`; }
-  if (places.includes(p)) { renderPlaces(); renderEntries(places[0]); markers.forEach((m, i) => m.setTooltipContent(placeLabel(places[i]))); }
+  if (places.includes(p)) { renderPlaces(); renderEntries(places[0]); renderSummary(); markers.forEach((m, i) => m.setTooltipContent(placeLabel(places[i]))); }
 }
 function placeLabel(p) {
   if (p.q != null) { const q = QUICK[p.q]; return T(q[0], q[1], q[4]); }
@@ -282,10 +282,47 @@ function renderEntries(p) {
     <div class="estat"><span class="k mono">${k}</span><b class="mono">${n}</b><span class="note">${sub}</span></div><span class="go mono">→</span></a>`).join("");
 }
 
+// ---------- at-a-glance summary (rule-based from the same numbers, no AI) ----------
+function indicatorStat(k, p) {
+  const K = KEYS[k];
+  if (K.sat) {
+    const near = K.stOnly || p.dist <= 40, src = near ? p.st : p.cell, ser = src.series[K.sat], tr = src.trend[K.sat];
+    const v = ser.filter(x => x != null), a = mean(v.slice(0, 10)), b = mean(ser.slice(-10));
+    const mark = tr && tr.p < 0.05 ? "ok" : (tr && tr.p < 0.1) || (K.stOnly && b > a) ? "mid" : "no";
+    return { a, b, dir: Math.sign((b ?? 0) - (a ?? 0)), mark, unit: K.stOnly ? T(K.unit, K.unit_en, K.unit_ko) : "%", from: T("2000年代", "2000s", "2000년대"), d: K.stOnly ? 1 : 0 };
+  }
+  const near = p.dist <= 40, ser = near ? p.st.series[k] : p.cell.series[k], a = mean(ser.slice(0, 10)), b = mean(ser.slice(-10));
+  const [cls] = verdict(near ? p.st.trend[k] : null, p.cell.trend[k]);
+  return { a, b, dir: Math.sign(Math.round(b) - Math.round(a)), mark: cls, unit: T(K.unit, K.unit_en, K.unit_ko), from: T("1990年代", "1990s", "1990년대"), d: 0 };
+}
+function summaryHTML(p) {
+  const order = ["heavy", "spring", "storm", "powder", "share", "icy"], S = Object.fromEntries(order.map(k => [k, indicatorStat(k, p)]));
+  const rank = { ok: 0, mid: 1, no: 2 }, rows = [...order].sort((x, y) => rank[S[x].mark] - rank[S[y].mark]);
+  const sure = m => m !== "no";
+  const parts = [];
+  if (S.heavy.dir > 0 && sure(S.heavy.mark)) parts.push(T("雪は重く", "snow is getting heavier", "눈은 무거워지고"));
+  if (S.storm.dir > 0 && sure(S.storm.mark)) parts.push(T("重い大雪・大雨が増え", "wet heavy storms are more frequent", "무거운 폭설·폭우는 늘고"));
+  if (S.spring.dir < 0 && sure(S.spring.mark)) parts.push(T("春の雪は早く消える", "spring snow vanishes sooner", "봄 눈은 빨리 사라지는"));
+  const head = parts.length
+    ? T(`${placeLabel(p)}では、${parts.join("、")}方向です。`, `In ${placeLabel(p)}, ${parts.join(", ")}.`, `${placeLabel(p)}에서는 ${parts.join(", ")} 방향입니다.`)
+    : T(`${placeLabel(p)}では、はっきりした変化はまだ言えません。`, `In ${placeLabel(p)}, no clear change can be claimed yet.`, `${placeLabel(p)}에서는 아직 뚜렷한 변화를 말할 수 없습니다.`);
+  const mk = { ok: "✅", mid: "🟡", no: "⚪" }, arrow = d => (d > 0 ? "↑" : d < 0 ? "↓" : "→");
+  let fcLine = "";
+  if (FC && !FC.error && FC.time) {
+    const cls = FC.time.map((t, i) => fcClass(FC, i).map(x => x[0])), warn = cls.filter(c => c.includes("warn")).length, pw = cls.filter(c => c.includes("powder")).length, hv = cls.filter(c => c.includes("heavy")).length;
+    fcLine = `<p class="sum-fc">${T(`この先7日：⚠️ 転倒注意 ${warn}日 · ❄️ パウダー ${pw}日 · 💧 重い雪 ${hv}日`, `Next 7 days: ⚠️ fall risk ${warn} · ❄️ powder ${pw} · 💧 heavy snow ${hv}`, `앞으로 7일: ⚠️ 낙상 주의 ${warn}일 · ❄️ 파우더 ${pw}일 · 💧 무거운 눈 ${hv}일`)}</p>`;
+  }
+  return `<p class="lbl mono">${T("ひとことで", "In a nutshell", "한눈에 요약")}</p><h2 class="sum-h">${head}</h2>
+    <ul class="sum">${rows.map(k => { const r = S[k], K = KEYS[k]; return `<li class="${r.mark}"><span class="m">${mk[r.mark]}</span><span class="n">${K.icon} ${T(K.ja, K.en, K.ko)}</span><b class="mono">${arrow(r.dir)} ${fmt(r.a, r.d)} → ${fmt(r.b, r.d)}${r.unit}</b></li>`; }).join("")}</ul>
+    ${fcLine}<p class="note">${T("✅ 確か　🟡 傾向あり　⚪ まだ言えない（左から古い10年 → 最近10年の平均）。くわしくは「雪質カルテ」へ。", "✅ certain  🟡 likely  ⚪ not yet clear (older 10 years → latest 10 years). Details on the Snow chart page.", "✅ 확실  🟡 경향 있음  ⚪ 아직 말할 수 없음 (앞 10년 → 최근 10년 평균). 자세한 건 「눈 품질 카르테」에서.")}
+    <a class="link-in" href="#/karte">${T("雪質カルテを見る →", "Open the snow chart →", "눈 품질 카르테 보기 →")}</a></p>`;
+}
+function renderSummary() { if (places.length) document.querySelectorAll(".summary").forEach(el => (el.innerHTML = summaryHTML(places[0]))); }
+
 function render() {
   chartRefs.forEach(c => c.destroy()); chartRefs = [];
   const [p, p2] = places;
-  renderPlaces(); renderEntries(p);
+  renderPlaces(); renderEntries(p); renderSummary();
   const keys = ["powder", "heavy", "icy", "share", "spring", "storm"];
   document.getElementById("cards").innerHTML = keys.map((k, i) => cardHTML(k, p, i)).join("");
   if (VIEW === "karte") keys.forEach((k, i) => drawChart("c" + i, p, k, p2));
@@ -393,6 +430,7 @@ function fcClass(d, i) {
   return out;
 }
 function renderForecast() {
+  renderSummary();
   const el = document.getElementById("fc"), note = document.getElementById("fcNote");
   if (!FC) { el.innerHTML = `<p class="note">${T("予報を読みこみ中…", "Loading forecast…", "예보 불러오는 중…")}</p>`; note.textContent = ""; return; }
   if (FC.error) { el.innerHTML = `<p class="note">${T("予報を読みこめませんでした", "Could not load the forecast", "예보를 불러오지 못했습니다")}</p>`; return; }
