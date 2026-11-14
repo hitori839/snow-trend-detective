@@ -265,7 +265,7 @@ function renderSat() {
 function tipsHTML(p) {
   const who = [
     ["🏠", T("住む人", "Residents", "주민"), T("7日予報の⚠️の前日に、滑り止めの靴と屋根の雪下ろし。重い雪の日が増えた街ほど早めに。", "On the day before a ⚠️ in the 7-day forecast: anti-slip shoes and roof clearing — earlier in towns where heavy-snow days rose.", "7일 예보에 ⚠️가 뜨기 전날, 미끄럼 방지 신발과 지붕 눈 치우기. 무거운 눈의 날이 늘어난 동네일수록 일찍.")],
-    ["🏛️", T("市・除雪", "City & snow crews", "시청·제설"), T("「まちの地図」で重い雪とつるつる路面が増えた地域を見て、砂まき・排雪・ロードヒーティングの優先順位に。転倒が多い日は⚠️の条件と同じです。", "Use the City view map to rank grit, snow hauling and road heating where heavy snow and icy days rose; Sapporo's worst fall days match the ⚠️ conditions.", "「동네 지도」에서 무거운 눈·빙판길이 늘어난 지역을 보고 모래·배설·도로 열선 우선순위를. 낙상이 많은 날은 ⚠️ 조건과 같습니다.")],
+    ["🏛️", T("市・除雪", "City & snow crews", "시청·제설"), T("札幌市は2026年度、過去最大の約286億円を雪対策に使います。「まちの地図」と下の「データ」で重い雪とつるつる路面が増えた地域を見て、砂まき・排雪・ロードヒーティングの優先順位に。転倒が多い日は⚠️の条件と同じです。", "Sapporo spends a record ~28.6 billion yen on snow in FY2026. Use the City view map and the open data to rank grit, snow hauling and road heating where heavy snow and icy days rose; Sapporo's worst fall days match the ⚠️ conditions.", "삿포로시는 2026년도 역대 최대인 약 286억 엔을 눈 대책에 씁니다. 「동네 지도」와 아래 「데이터」에서 무거운 눈·빙판길이 늘어난 지역을 보고 모래·배설·도로 열선 우선순위를. 낙상이 많은 날은 ⚠️ 조건과 같습니다.")],
     ["🤝", T("地域の雪かき支援", "Community snow help", "지역 눈 치우기 지원"), T("重い雪や⚠️の日は、高齢の方や一人では雪かきが難しい家の前に雪が残りやすい日。支援の人手を前の日に手配する目安に。", "Heavy-snow and ⚠️ days are when snow piles up at the doors of older residents and households who cannot clear it alone — a cue to arrange helpers the day before.", "무거운 눈이나 ⚠️인 날은 고령자나 혼자 눈을 치우기 어려운 집 앞에 눈이 남기 쉬운 날. 도울 사람을 전날 준비하는 기준으로.")],
     ["⛷️", T("スキー場・観光", "Ski areas & tourism", "스키장·관광"), T("4月の雪が10年で約13ポイント減。春シーズンの終わり方とパウダーの見せ方を、毎年このカルテで確かめる。", "April snow cover is down ~13 points a decade: re-plan the end of the spring season and how powder is promoted, checking this chart every winter.", "4월 눈 덮임이 10년에 약 13%p 감소. 봄 시즌 마무리와 파우더 홍보 방식을 해마다 이 카르테로 확인.")],
   ];
@@ -564,6 +564,9 @@ function renderFalls() {
       "The worst days (top 6 in 35 winters, e.g. 163 people on 21 Dec 2014) mostly came when <b>wet, heavy snow or rain froze afterwards</b> — the same conditions as this app's “heavy-snow days”.", "낙상이 특히 많았던 날(35겨울 중 상위 6일, 예: 2014년 12월 21일 하루 163명)은 대부분 <b>물기 많은 젖은 눈이나 비가 내린 뒤 얼어붙은 날</b>이었습니다. 이 앱의 「무거운 눈의 날」과 같은 조건입니다."),
     T(`前の冬より重い雪の日が増えた冬は、搬送も増えていました（年ごとの増減の相関 r=${fmt(lk.r_change, 2)}、p=${fmt(lk.p_change, 3)}、${lk.n}冬）。統計的に有意な関係です（高齢化など、ほかの理由も重なっています）。`,
       `Winters with more heavy-snow days than the year before had more transports (correlation of year-to-year changes r = ${fmt(lk.r_change, 2)}, p = ${fmt(lk.p_change, 3)}, ${lk.n} winters). A statistically significant link (ageing and other factors also play a part).`, `전년보다 무거운 눈의 날이 늘어난 겨울에는 이송도 늘었습니다 (해마다 증감의 상관 r=${fmt(lk.r_change, 2)}, p=${fmt(lk.p_change, 3)}, ${lk.n}겨울). 통계적으로 유의한 관계입니다 (고령화 등 다른 이유도 겹쳐 있습니다).`),
+    T("例：163人が運ばれた2014年12月21日の前日は、最高7.2℃で雨が降り、翌朝はマイナス6.3℃まで冷え込みました。このアプリの⚠️の条件そのものです（1日の例で、統計的な確かめではありません）。",
+      "Example: the day before 21 Dec 2014 (163 people taken to hospital) reached 7.2 °C with rain, then fell to −6.3 °C the next morning — exactly this app's ⚠️ condition (one example, not a statistical test).",
+      "예: 163명이 이송된 2014년 12월 21일의 전날은 최고 7.2℃에 비가 왔고, 다음 날 아침 영하 6.3℃까지 떨어졌습니다. 이 앱의 ⚠️ 조건 그대로입니다 (하루의 예이며 통계적 확인은 아닙니다)."),
   ].map(x => `<li>${x}</li>`).join("");
 }
 
@@ -583,6 +586,7 @@ function renderAbout() {
     T("雪道の転倒による救急搬送：札幌市消防局のデータ（ウインターライフ推進協議会 tsurutsuru.jp）", "Fall-injury ambulance transports: Sapporo City Fire Bureau data (Winter Life Promotion Council, tsurutsuru.jp)", "눈길 낙상 구급 이송: 삿포로시 소방국 자료 (윈터라이프 추진협의회 tsurutsuru.jp)"),
     T("確かめ：多くのマスを同時に検定するため、ベンジャミニ・ホッホベルグ法（FDR）と、冬の順番をシャッフルする検定（500回）で偶然かどうかを確認", "Checks: many cells are tested at once, so we use Benjamini–Hochberg FDR and a 500-run shuffle test of winter order", "확인: 많은 칸을 한꺼번에 검정하므로 벤야미니-호흐베르크 FDR 보정과 겨울 순서를 섞는 검정(500회)으로 우연인지 확인"),
     T("雪質予報：Open-Meteo の7日間予報（気温・降雪・降雨）を同じ決まりで判定", "Snow-quality forecast: Open-Meteo 7-day forecast (temperature, snowfall, rain) classified with the same rules", "눈 품질 예보: Open-Meteo 7일 예보(기온·강설·강우)를 같은 규칙으로 판정"),
+    T("比べた国の報告書：文部科学省・気象庁「日本の気候変動2025」第6章（降雪・積雪）。北海道内陸の極端な大雪の増加の可能性、ざらめ雪の割合の増加などと同じ向きです。", "National assessment compared: MEXT & JMA, Climate Change in Japan 2025, Chapter 6 (snowfall and snow cover) — our results point the same way as its possible rise in extreme snowfall in inland Hokkaido and in coarse, refrozen snow.", "비교한 나라의 보고서: 문부과학성·기상청 「日本の気候変動2025」 6장(강설·적설). 홋카이도 내륙 극단적 폭설 증가 가능성, ざらめ雪 비율 증가 등과 같은 방향입니다."),
     T("住所検索：国土地理院 / 地図：国土地理院タイル", "Address search and map tiles: Geospatial Information Authority of Japan", "주소 검색·지도: 일본 국토지리원"),
   ].map(x => `<li>${x}</li>`).join("");
 }
@@ -623,3 +627,5 @@ async function init() {
   route();
 }
 init();
+// Installable web app: cache the app shell and last data so it opens offline (see sw.js)
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));

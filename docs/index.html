@@ -7,6 +7,10 @@
 <meta name="generator" content="Code written with AI assistance (Claude, Anthropic)">
 <meta name="description" content="Is Hokkaido's powder snow turning heavy? A phone app that shows 35 years of snow-quality change for your town, checked against NASA, JAXA and JMA data.">
 <link rel="icon" href="assets/logo.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2f3d36">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -138,6 +142,24 @@
           <div class="row chips" id="layerChips"></div>
           <div id="map2" aria-label="Trend map"></div>
           <p class="note" id="legend"></p>
+        </div>
+      </section>
+
+      <section id="openData">
+        <p class="lbl mono" data-ja="市・研究者向けデータ" data-en="Open data for cities and research" data-ko="시청·연구자용 데이터"></p>
+        <div class="box">
+          <h2 data-ja="結果を、そのまま使えるように。" data-en="Take the results and use them." data-ko="결과를, 그대로 쓸 수 있도록."></h2>
+          <p class="note" data-ja="北海道43マス（NASA）と気象庁10観測所の、すべての指標の古い10年・最近10年の平均、10年あたりの傾き、p値（マスは多重比較補正後のq値も）を表にしました。除雪や砂まきの計画、研究にそのまま使えます。" data-en="Every indicator for 43 NASA cells and 10 JMA stations: older-10-year and latest-10-year means, slope per decade and p-value (q-value after multiple-testing correction for cells). Ready for snow-removal planning or research." data-ko="홋카이도 43칸(NASA)과 기상청 관측소 10곳의 모든 지표에 대해 앞 10년·최근 10년 평균, 10년당 기울기, p값(칸은 다중 비교 보정 후 q값도)을 표로 만들었습니다. 제설·모래 뿌리기 계획이나 연구에 그대로 쓸 수 있습니다."></p>
+          <div class="row dl">
+            <a class="btn-k" href="data/cells_trends.csv" download data-ja="↓ NASA 43マス（CSV）" data-en="↓ NASA 43 cells (CSV)" data-ko="↓ NASA 43칸 (CSV)"></a>
+            <a class="btn-k" href="data/stations_trends.csv" download data-ja="↓ 気象庁10観測所（CSV）" data-en="↓ 10 JMA stations (CSV)" data-ko="↓ 기상청 관측소 10곳 (CSV)"></a>
+            <a class="chip" href="data.json" download data-ja="全データ（JSON）" data-en="Full data (JSON)" data-ko="전체 데이터 (JSON)"></a>
+            <a class="chip" href="https://github.com/hitori839/snow-trend-detective" target="_blank" rel="noopener" data-ja="計算コード（GitHub）" data-en="Code (GitHub)" data-ko="계산 코드 (GitHub)"></a>
+          </div>
+          <ul class="dots small">
+            <li data-ja="列の意味：〇〇_early_mean＝古い10年の平均、〇〇_late_mean＝最近10年の平均、slope_per_decade＝セン傾き（10年あたり）、p＝マン・ケンドール検定、q_fdr＝ベンジャミニ・ホッホベルグ補正。heavy＝重い雪の日、powder＝パウダーの日、icy＝つるつる路面の日、slr＝水1mmで積もる雪(cm)、storm_wet＝重い大雪・大雨の日、cov_apr＝4月の雪のおおわれ方(%)。" data-en="Columns: X_early_mean = older 10-year mean, X_late_mean = latest 10-year mean, slope_per_decade = Sen's slope, p = Mann–Kendall, q_fdr = Benjamini–Hochberg. heavy = heavy-snow days, powder = powder days, icy = icy-road days, slr = cm of snow per mm of water, storm_wet = wet heavy-storm days, cov_apr = April snow cover (%)." data-ko="열의 뜻: X_early_mean=앞 10년 평균, X_late_mean=최근 10년 평균, slope_per_decade=센 기울기(10년당), p=맨-켄달 검정, q_fdr=벤야미니-호흐베르크 보정. heavy=무거운 눈의 날, powder=파우더의 날, icy=빙판길 날, slr=물 1mm로 쌓이는 눈(cm), storm_wet=무거운 폭설·폭우 날, cov_apr=4월 눈 덮임(%)."></li>
+            <li data-ja="出典の表示をお願いします：Snow Trend Detective が NASA POWER・NASA MODIS（GIBS）・JAXA GSMaP・気象庁のデータを加工して作成。元データの利用条件は各機関の規約に従ってください。" data-en="Please credit: produced by Snow Trend Detective from NASA POWER, NASA MODIS (GIBS), JAXA GSMaP and JMA data. The original data remain under each agency's terms." data-ko="출처 표시를 부탁드립니다: Snow Trend Detective가 NASA POWER·NASA MODIS(GIBS)·JAXA GSMaP·기상청 자료를 가공해 작성. 원자료 이용 조건은 각 기관의 규정을 따라 주세요."></li>
+          </ul>
         </div>
       </section>
 

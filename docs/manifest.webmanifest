@@ -1,0 +1,15 @@
+{
+  "name": "わが街の雪質カルテ — Snow Trend Detective",
+  "short_name": "雪質カルテ",
+  "description": "35 years of snow-quality change for your town, from NASA, JAXA and JMA data.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f7ef",
+  "theme_color": "#2f3d36",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

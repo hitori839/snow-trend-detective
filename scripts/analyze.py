@@ -305,6 +305,37 @@ print("falls", json.dumps(falls["link"]), falls["trend"])
 _sl = [st["trend"].get("slr") for st in stations]
 print("snow ratio: down", sum(1 for t in _sl if t and t["slope10"] < 0), "sig down", sum(1 for t in _sl if t and t["slope10"] < 0 and t["p"] < .05), "of", sum(1 for t in _sl if t))
 os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
+# ---- open data for city and research use: one row per NASA cell / JMA station ----
+import csv
+OUTD = os.path.join(ROOT, "docs", "data"); os.makedirs(OUTD, exist_ok=True)
+def m10(v, first=True):
+    x = [a for a in v if a is not None]; x = x[:10] if first else [a for a in v[-10:] if a is not None]
+    return round(sum(x) / len(x), 2) if x else ""
+CELL_KEYS = ["heavy", "powder", "icy", "share", "snow_days", "cov_apr", "cov_dec"]
+with open(os.path.join(OUTD, "cells_trends.csv"), "w", newline="", encoding="utf-8") as f:
+    w = csv.writer(f)
+    w.writerow(["lat", "lon", "elev_m"] + [f"{k}_{c}" for k in CELL_KEYS for c in ("early_mean", "late_mean", "slope_per_decade", "p", "q_fdr")])
+    for c in cells:
+        row = [c["lat"], c["lon"], c["elev"]]
+        for k in CELL_KEYS:
+            t = c["trend"].get(k) or {}; ser = c["series"].get(k, [])
+            row += [m10(ser), m10(ser, False), t.get("slope10", ""), t.get("p", ""), t.get("q", "")]
+        w.writerow(row)
+ST_KEYS = ["heavy", "powder", "icy", "share", "slr", "storm_wet", "storm_powder", "maxdepth", "cov_apr"]
+with open(os.path.join(OUTD, "stations_trends.csv"), "w", newline="", encoding="utf-8") as f:
+    w = csv.writer(f)
+    w.writerow(["jma_block", "name_en", "name_ja", "lat", "lon"] + [f"{k}_{c}" for k in ST_KEYS for c in ("early_mean", "late_mean", "slope_per_decade", "p")]
+               + ["winter_temp_slope_per_decade", "winter_temp_p", "heavy_days_per_degC", "heavy_observed_change_35y", "heavy_change_explained_by_warming"])
+    cs = {x["id"]: x for x in CAUSE["stations"]}
+    for st in stations:
+        row = [st["id"], st["en"], st["ja"], st["lat"], st["lon"]]
+        for k in ST_KEYS:
+            t = st["trend"].get(k) or {}; ser = st["series"].get(k, [])
+            row += [m10(ser), m10(ser, False), t.get("slope10", ""), t.get("p", "")]
+        cc = cs.get(st["id"], {})
+        row += [cc.get("temp_trend", {}).get("slope10", ""), cc.get("temp_trend", {}).get("p", ""), cc.get("days_per_degC", ""), cc.get("observed_change", ""), cc.get("explained_change", "")]
+        w.writerow(row)
+print("open data written:", os.listdir(OUTD))
 json.dump({"winters": list(range(W0, W1 + 1)), "cells": cells, "stations": stations,
            "hokkaido": {"series": modis("hokkaido", None), "trend": {k: mk(v) for k, v in modis("hokkaido", None).items()}},
            "field": FIELD, "falls": falls, "sensitivity": SENS, "cause": CAUSE,
