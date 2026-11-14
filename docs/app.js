@@ -1,5 +1,5 @@
 "use strict";
-let fallChart = null;
+let fallChart = null, FC = null, fcKey = "";
 let satMap, satLayer, satMonth = "04", SATLUT = null;
 let LANG = "ja", D = null, map, map2, layer2, markers = [], places = [], chartRefs = [], tmYear = 2024, layerKey = "heavy";
 const T = (ja, en) => (LANG === "ja" ? ja : en);
@@ -25,7 +25,7 @@ function applyLang() {
   document.getElementById("quick").innerHTML = QUICK.map((q, i) => `<button class="chip" data-i="${i}">${T(q[0], q[1])}</button>`).join("");
   document.querySelectorAll("#quick .chip").forEach(b => (b.onclick = () => { const q = QUICK[+b.dataset.i]; choose(q[2], q[3], T(q[0], q[1])); }));
   renderAbout(); renderFacts(); renderFalls(); renderLayerChips(); drawMap2();
-  if (places.length) render();
+  if (places.length) { render(); renderForecast(); }
 }
 
 function nearestCell(la, lo) { return D.cells.reduce((b, c) => (km(la, lo, c.lat, c.lon) < km(la, lo, b.lat, b.lon) ? c : b)); }
@@ -38,7 +38,7 @@ function choose(la, lo, label) {
   if (cmp && places.length >= 1) places = [places[0], p]; else places = [p];
   markers.forEach(m => map.removeLayer(m));
   markers = places.map((q, i) => L.circleMarker([q.la, q.lo], { radius: 9, color: i ? css("--heavy") : css("--blue"), weight: 3, fillOpacity: .3 }).addTo(map).bindTooltip(q.label));
-  render();
+  render(); loadForecast(places[0]);
   document.getElementById("result").hidden = false;
   if (satMap) satMap.invalidateSize();
   if (!cmp) document.getElementById("places").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -277,6 +277,41 @@ async function shareCard() {
   const u = URL.createObjectURL(blob), l = document.createElement("a"); l.href = u; l.download = "snow-karte.png"; l.click(); setTimeout(() => URL.revokeObjectURL(u), 2000);
 }
 
+// 7-day forecast (Open-Meteo), classified with the same rules as the 35-year chart
+async function loadForecast(p) {
+  const key = `${p.la.toFixed(2)},${p.lo.toFixed(2)}`; if (key === fcKey && FC) return renderForecast(); fcKey = key; FC = null; renderForecast();
+  try {
+    const u = `https://api.open-meteo.com/v1/forecast?latitude=${p.la}&longitude=${p.lo}&daily=temperature_2m_mean,temperature_2m_max,temperature_2m_min,snowfall_sum,rain_sum&timezone=Asia%2FTokyo&forecast_days=7`;
+    const j = await (await fetch(u)).json(); if (key !== fcKey) return; FC = j.daily;
+  } catch (e) { FC = { error: true }; }
+  renderForecast();
+}
+function fcClass(d, i) {
+  const tm = d.temperature_2m_mean[i], tx = d.temperature_2m_max[i], tn = d.temperature_2m_min[i], sn = d.snowfall_sum[i], rn = d.rain_sum[i];
+  const wet = rn >= 1 || (sn >= 1 && tm > -2);           // rain or wet, heavy snow today
+  const freezeNext = i + 1 < d.time.length ? d.temperature_2m_min[i + 1] < 0 : false;
+  const out = [];
+  if (sn >= 1) out.push(tm <= -5 ? ["powder", "❄️", T("パウダー", "Powder")] : tm > -2 ? ["heavy", "💧", T("重い雪", "Heavy snow")] : ["mid", "🌨️", T("ふつうの雪", "Snow")]);
+  if (wet && (tn < 0 || freezeNext)) out.push(["warn", "⚠️", T("転倒注意：ぬれた雪・雨が凍る", "Fall risk: wet snow/rain freezes")]);
+  else if (tx > 0 && tn < 0) out.push(["icy", "🧊", T("つるつる路面", "Icy roads")]);
+  if (!out.length) out.push(["none", "·", sn > 0 ? T("雪わずか", "Light snow") : T("雪なし", "No snow")]);
+  return out;
+}
+function renderForecast() {
+  const el = document.getElementById("fc"), note = document.getElementById("fcNote");
+  if (!FC) { el.innerHTML = `<p class="note">${T("予報を読みこみ中…", "Loading forecast…")}</p>`; note.textContent = ""; return; }
+  if (FC.error) { el.innerHTML = `<p class="note">${T("予報を読みこめませんでした", "Could not load the forecast")}</p>`; return; }
+  const wd = T(["日", "月", "火", "水", "木", "金", "土"], ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
+  el.innerHTML = FC.time.map((t, i) => {
+    const dt = new Date(t + "T00:00:00"), c = fcClass(FC, i);
+    return `<div class="fcd ${c.some(x => x[0] === "warn") ? "warn" : c[0][0]}"><div class="dd">${i === 0 ? T("今日", "Today") : `${dt.getMonth() + 1}/${dt.getDate()}(${wd[dt.getDay()]})`}</div>
+      <div class="ic">${c.map(x => x[1]).join("")}</div><div class="lb">${c.map(x => x[2]).join("<br>")}</div>
+      <div class="tt">${fmt(FC.temperature_2m_min[i], 0)}〜${fmt(FC.temperature_2m_max[i], 0)}℃${FC.snowfall_sum[i] > 0 ? ` · ❄${fmt(FC.snowfall_sum[i], 0)}cm` : ""}</div></div>`;
+  }).join("");
+  note.innerHTML = T("35年のカルテと同じ決まり（雪の日の平均気温 −5℃以下＝パウダー、−2℃より暖かい＝重い雪、最高0℃超・最低0℃未満＝つるつる）で判定。⚠️は「雨やぬれた雪のあとに凍る」日で、札幌で転倒が特に多かった日の条件です。予報：Open-Meteo（気象機関の数値予報モデル）。",
+    "Same rules as the 35-year chart (snow day mean ≤ −5 °C = powder, > −2 °C = heavy, max > 0 °C and min < 0 °C = icy). ⚠️ marks rain or wet snow followed by freezing — the conditions of Sapporo's worst fall days. Forecast: Open-Meteo (national weather service models).");
+}
+
 function renderFalls() {
   const F = D.falls, sap = D.stations.find(s => s.en === "Sapporo"), last = F.transports.length - 1, lk = F.link.heavy;
   const heavy = F.winters.map(w => { const i = D.winters.indexOf(w); return i < 0 ? null : sap.series.heavy[i]; });
@@ -308,6 +343,7 @@ function renderAbout() {
     T("体感温度：気温と平均風速から風冷指数（カナダ気象局の式）で計算した目安", "Feels-like: wind-chill index (Environment Canada formula) from temperature and mean wind, as a rough guide"),
     T("雪道の転倒による救急搬送：札幌市消防局のデータ（ウインターライフ推進協議会 tsurutsuru.jp）", "Fall-injury ambulance transports: Sapporo City Fire Bureau data (Winter Life Promotion Council, tsurutsuru.jp)"),
     T("確かめ：多くのマスを同時に検定するため、ベンジャミニ・ホッホベルグ法（FDR）と、冬の順番をシャッフルする検定（500回）で偶然かどうかを確認", "Checks: many cells are tested at once, so we use Benjamini–Hochberg FDR and a 500-run shuffle test of winter order"),
+    T("雪質予報：Open-Meteo の7日間予報（気温・降雪・降雨）を同じ決まりで判定", "Snow-quality forecast: Open-Meteo 7-day forecast (temperature, snowfall, rain) classified with the same rules"),
     T("住所検索：国土地理院 / 地図：国土地理院タイル", "Address search and map tiles: Geospatial Information Authority of Japan"),
   ].map(x => `<li>${x}</li>`).join("");
 }

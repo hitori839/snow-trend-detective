@@ -66,3 +66,7 @@ footer{text-align:center;font-size:12px;color:var(--muted);padding:24px 16px}
 .field{margin:-4px 0 14px}.field details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}.field summary{cursor:pointer;font-weight:700}.field ul{margin:6px 0;padding-left:4px;list-style:none}.field li{margin:4px 0;font-size:15px}
 .fallchart{height:220px}
 #fallText{margin:10px 0 0;padding-left:20px}#fallText li{margin:6px 0}
+.fcrow{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(92px,1fr);gap:8px;overflow-x:auto;padding-bottom:4px}
+.fcd{border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center;background:var(--bg)}
+.fcd .dd{font-size:13px;color:var(--muted);font-weight:700}.fcd .ic{font-size:24px;line-height:1.3}.fcd .lb{font-size:12px;font-weight:700;line-height:1.35;min-height:32px}.fcd .tt{font-size:12px;color:var(--muted);margin-top:4px}
+.fcd.powder{border-color:var(--powder)}.fcd.heavy{border-color:var(--heavy)}.fcd.warn{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,var(--bg))}.fcd.icy{border-color:var(--icy)}
