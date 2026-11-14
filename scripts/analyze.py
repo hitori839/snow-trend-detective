@@ -8,6 +8,7 @@ Indicators (per winter):
   icy         days with max > 0 C and min < 0 C (melt by day, freeze at night)
   maxdepth    deepest snow on the ground (JMA only, cm)
   coldest     coldest morning: min temperature and wind chill (JMA only)
+  cov_dec / cov_apr  NASA MODIS (Terra) satellite snow cover (%) in December / April, 2001-2026
 Trend: Mann-Kendall test (tie-corrected) + Sen's slope (per decade)."""
 import os, json, math, glob
 from stations import STATIONS
@@ -64,9 +65,19 @@ def winters(days):
             out["cold_t"].append(None); out["cold_wc"].append(None); out["cold_date"].append(None)
     return out
 
-TREND_KEYS = ("snow_days", "powder", "heavy", "share", "icy", "maxdepth", "cold_t")
+TREND_KEYS = ("snow_days", "powder", "heavy", "share", "icy", "maxdepth", "cold_t", "cov_dec", "cov_apr")
 
 JAXA = json.load(open(os.path.join(ROOT, "data", "raw", "jaxa_winter_precip.json")))
+# NASA MODIS monthly snow cover (%), from scripts/fetch_modis.py. December of the previous year and April of the winter year.
+MODIS = json.load(open(os.path.join(ROOT, "data", "raw", "modis_snow.json")))
+def modis(kind, key):
+    """kind: 'cells' | 'stations' | 'hokkaido'; returns {'cov_dec': [...], 'cov_apr': [...]} over W0..W1 (None before 2001)"""
+    def one(ym):
+        r = MODIS.get(ym)
+        if r is None: return None
+        return r["hokkaido"] if kind == "hokkaido" else r[kind].get(key)
+    return {"cov_dec": [one(f"{w - 1}-12") for w in range(W0, W1 + 1)], "cov_apr": [one(f"{w}-04") for w in range(W0, W1 + 1)],
+            "cov_feb": [one(f"{w}-02") for w in range(W0, W1 + 1)]}
 
 def power_series(path):
     j = json.load(open(path)); p = j["p"]; days = {}
@@ -92,13 +103,14 @@ def jma_series(b):
             days[f"{y}{m}{r['d']:02d}"] = {"tmean": r["tmean"], "tmax": r["tmax"], "tmin": r["tmin"], "snow": r["snowfall"], "wind": r["wind"], "depth": r["depth"]}
     return winters(days)
 
-def trends(s): return {k: mk(s[k]) for k in TREND_KEYS if any(v is not None for v in s[k])}
+def trends(s): return {k: mk(s[k]) for k in TREND_KEYS if k in s and any(v is not None for v in s[k])}
 
 cells = []
 for la, lo in CELLS:
     f = os.path.join(ROOT, "data", "raw", "power", f"{la:.3f}_{lo:.3f}.json")
     if not os.path.exists(f): continue
     j, s = power_series(f)
+    s.update(modis("cells", f"{la:.3f}_{lo:.3f}"))
     jx = JAXA.get(f"{la:.3f}_{lo:.3f}", {})
     jser = [jx.get(str(w)) for w in range(W0, W1 + 1)]
     cut = 2001 - W0
@@ -108,14 +120,21 @@ stations = []
 for p, b, ja, en, la, lo in STATIONS:
     s = jma_series(b)
     if s is None: continue
+    s.update(modis("stations", str(b)))
     f = os.path.join(ROOT, "data", "raw", "power", f"{la:.3f}_{lo:.3f}.json")
     ps = power_series(f)[1] if os.path.exists(f) else None
     stations.append({"id": b, "ja": ja, "en": en, "lat": la, "lon": lo, "series": s, "trend": trends(s),
                      "power": {"series": ps, "trend": trends(ps)} if ps else None})
 os.makedirs(os.path.join(ROOT, "docs"), exist_ok=True)
 json.dump({"winters": list(range(W0, W1 + 1)), "cells": cells, "stations": stations,
+           "hokkaido": {"series": modis("hokkaido", None), "trend": {k: mk(v) for k, v in modis("hokkaido", None).items()}},
+           "modis_lut": json.load(open(os.path.join(ROOT, "data", "raw", "modis_lut.json"))),
            "meta": {"powder_t": -5, "heavy_t": -2, "season": "Dec-Mar"}}, open(os.path.join(ROOT, "docs", "data.json"), "w"), ensure_ascii=False, separators=(",", ":"))
 print("cells", len(cells), "stations", len(stations))
+print("Hokkaido MODIS", json.dumps(data_hok := {k: mk(v) for k, v in modis("hokkaido", None).items()}))
+for k in ("cov_dec", "cov_apr"):
+    tt = [c["trend"].get(k) for c in cells]; tt = [t for t in tt if t]
+    print(k, "cells down", sum(t["slope10"] < 0 for t in tt), "sig down", sum(t["slope10"] < 0 and t["p"] < .05 for t in tt), "sig up", sum(t["slope10"] > 0 and t["p"] < .05 for t in tt), "of", len(tt))
 for st in stations:
     t = st["trend"]; pt = (st["power"] or {}).get("trend", {})
-    print(st["en"], {k: (t[k]["slope10"], t[k]["p"]) for k in ("powder", "heavy", "share", "icy", "maxdepth") if t.get(k)}, "| POWER", {k: (pt[k]["slope10"], pt[k]["p"]) for k in ("powder", "heavy", "share", "icy") if pt.get(k)})
+    print(st["en"], {k: (t[k]["slope10"], t[k]["p"]) for k in ("powder", "heavy", "share", "icy", "maxdepth", "cov_apr") if t.get(k)}, "| POWER", {k: (pt[k]["slope10"], pt[k]["p"]) for k in ("powder", "heavy", "share", "icy") if pt.get(k)})

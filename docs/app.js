@@ -1,10 +1,12 @@
 "use strict";
+let satMap, satLayer, satMonth = "04", SATLUT = null;
 let LANG = "ja", D = null, map, map2, layer2, markers = [], places = [], chartRefs = [], tmYear = 2024, layerKey = "heavy";
 const T = (ja, en) => (LANG === "ja" ? ja : en);
 const KEYS = {
   powder: { icon: "❄️", ja: "パウダーの日", en: "Powder days", sub_ja: "雪の日のうち、日平均気温 −5℃以下（軽く乾いた雪）", sub_en: "Snow days with daily mean ≤ −5 °C (light, dry snow)", unit: "日", unit_en: "days", color: "--powder" },
   heavy: { icon: "💧", ja: "重い雪の日", en: "Heavy-snow days", sub_ja: "雪の日のうち、日平均気温 −2℃より暖かい（水分が多い雪）", sub_en: "Snow days with daily mean > −2 °C (wet, heavy snow)", unit: "日", unit_en: "days", color: "--heavy" },
   icy: { icon: "🧊", ja: "つるつる路面の日", en: "Icy-road days", sub_ja: "最高気温0℃超・最低気温0℃未満（昼に溶けて夜に凍る）", sub_en: "Max > 0 °C and min < 0 °C (melts by day, refreezes at night)", unit: "日", unit_en: "days", color: "--icy" },
+  spring: { icon: "🛰️", ja: "4月に残る雪（衛星）", en: "April snow cover (satellite)", sub_ja: "NASA MODIS衛星で見た、4月に雪でおおわれた土地の割合（2001〜2026年）", sub_en: "Share of land under snow in April, seen by NASA's MODIS satellite (2001–2026)", unit: "%", unit_en: "%", color: "--blue", sat: "cov_apr" },
   share: { icon: "📊", ja: "雪のうちパウダーの割合", en: "Share of powder", sub_ja: "雪の日全体に占めるパウダーの日の割合", sub_en: "Powder days as a share of all snow days", unit: "%", unit_en: "%", color: "--powder" },
 };
 const QUICK = [["札幌", "Sapporo", 43.06, 141.33], ["ニセコ（倶知安）", "Niseko (Kutchan)", 42.90, 140.76], ["旭川", "Asahikawa", 43.76, 142.37], ["函館", "Hakodate", 41.82, 140.75], ["釧路", "Kushiro", 42.98, 144.38], ["網走", "Abashiri", 44.02, 144.28]];
@@ -37,6 +39,7 @@ function choose(la, lo, label) {
   markers = places.map((q, i) => L.circleMarker([q.la, q.lo], { radius: 9, color: i ? css("--heavy") : css("--blue"), weight: 3, fillOpacity: .3 }).addTo(map).bindTooltip(q.label));
   render();
   document.getElementById("result").hidden = false;
+  if (satMap) satMap.invalidateSize();
   if (!cmp) document.getElementById("places").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -51,7 +54,21 @@ function verdict(g, n) {
   return ["no", T("⚪ まだ言えない：データの方向が違う", "⚪ Not yet clear: data disagree")];
 }
 
+function satCardHTML(k, p, idx) {
+  const K = KEYS[k], near = p.dist <= 40, src = near ? p.st : p.cell, ser = src.series[K.sat], tr = src.trend[K.sat];
+  const v = ser.filter(x => x != null), a = mean(v.slice(0, 10)), b = mean(ser.slice(-10));
+  const cls = tr && tr.p < 0.05 ? "ok" : tr && tr.p < 0.1 ? "mid" : "no";
+  const txt = tr && tr.p < 0.05 ? T("✅ 確か：衛星の26年分で有意", "✅ Certain: significant over 26 years of satellite data") : tr && tr.p < 0.1 ? T("🟡 傾向あり（p<0.1）", "🟡 Likely (p < 0.1)") : T("⚪ まだ言えない", "⚪ Not yet clear");
+  const arrow = tr ? (tr.slope10 > 0 ? "↑" : tr.slope10 < 0 ? "↓" : "→") : "";
+  return `<div class="card kc"><h3>${K.icon} ${T(K.ja, K.en)}</h3><div class="sub">${T(K.sub_ja, K.sub_en)}</div>
+  <div class="nums"><span>${T("2000年代", "2000s")} <b class="big">${fmt(a, 0)}</b>%</span><span>→ ${T("2020年代", "2020s")} <b class="big">${fmt(b, 0)}</b>%</span>
+  <span class="arrow">${arrow} ${tr ? fmt(tr.slope10) : "–"}${T("ポイント", " pts")}/${T("10年", "decade")}</span></div>
+  <canvas id="c${idx}"></canvas><span class="badge ${cls}">${txt}</span>
+  <div class="cmpline">${near ? T(`${p.st.ja}のまわり約20km四方`, `~20 km box around ${p.st.en}`) : T(`約50kmのマス（北緯${p.cell.lat}° 東経${p.cell.lon}°）`, `~50 km cell ${p.cell.lat}°N ${p.cell.lon}°E`)}${tr ? " · p=" + fmt(tr.p, 2) : ""} · ${T("北海道全体", "All Hokkaido")} ${fmt(D.hokkaido.trend.cov_apr.slope10)}${T("ポイント/10年", " pts/decade")} (p=${fmt(D.hokkaido.trend.cov_apr.p, 3)})</div></div>`;
+}
+
 function cardHTML(k, p, idx) {
+  if (KEYS[k].sat) return satCardHTML(k, p, idx);
   const K = KEYS[k], near = p.dist <= 40;
   const ser = near ? p.st.series[k] : p.cell.series[k];
   const a = mean(ser.slice(0, 10)), b = mean(ser.slice(-10));
@@ -68,6 +85,16 @@ function cardHTML(k, p, idx) {
 
 function drawChart(id, p, k, p2) {
   const near = p.dist <= 40, yrs = D.winters;
+  if (KEYS[k].sat) {
+    const sk = KEYS[k].sat, i0 = D.winters.indexOf(2001), src = q => (q.dist <= 40 ? q.st : q.cell).series[sk].slice(i0);
+    const ds = [{ label: T("NASA MODIS衛星", "NASA MODIS satellite"), data: src(p), borderColor: css(KEYS[k].color), pointRadius: 2, borderWidth: 2, tension: .25 },
+      { label: T("北海道全体", "All Hokkaido"), data: D.hokkaido.series[sk].slice(i0), borderColor: css("--gray"), borderDash: [4, 3], pointRadius: 0, borderWidth: 1.5, tension: .25 }];
+    if (p2) ds.push({ label: p2.label, data: src(p2), borderColor: css("--heavy"), pointRadius: 0, borderWidth: 2, tension: .25 });
+    chartRefs.push(new Chart(document.getElementById(id), { type: "line", data: { labels: yrs.slice(i0), datasets: ds },
+      options: { animation: false, maintainAspectRatio: false, spanGaps: true, plugins: { legend: { display: true, labels: { boxWidth: 10, font: { size: 11 }, color: css("--muted") } } },
+        scales: { x: { ticks: { maxTicksLimit: 6, color: css("--muted") }, grid: { display: false } }, y: { min: 0, max: 100, ticks: { color: css("--muted"), maxTicksLimit: 3 } } } } }));
+    return;
+  }
   const ds = [{ label: near ? T("地上（気象庁）", "Ground (JMA)") : "NASA", data: (near ? p.st.series[k] : p.cell.series[k]), borderColor: css(KEYS[k].color), backgroundColor: "transparent", pointRadius: 0, borderWidth: 2, tension: .25 },
     { label: "NASA POWER", data: p.cell.series[k], borderColor: css("--gray"), borderDash: [4, 3], pointRadius: 0, borderWidth: 1.5, tension: .25, hidden: !near }];
   if (p2) ds.push({ label: p2.label, data: (p2.dist <= 40 ? p2.st.series[k] : p2.cell.series[k]), borderColor: css("--heavy"), pointRadius: 0, borderWidth: 2, tension: .25 });
@@ -104,12 +131,48 @@ function tmHTML(p, y) {
   return one(i, T(`${y}年の冬・${p.st.ja}`, `Winter ${y} · ${p.st.en}`)) + (i !== j ? one(j, T(`${D.winters[j]}年の冬（最新）`, `Winter ${D.winters[j]} (latest)`)) : "");
 }
 
+// NASA GIBS monthly snow-cover tiles, recoloured in the browser: GIBS colour -> percent (official colour map) -> blue shade
+const SatLayer = L.GridLayer.extend({
+  createTile(c, done) {
+    const cv = document.createElement("canvas"), sz = this.getTileSize(); cv.width = sz.x; cv.height = sz.y;
+    const img = new Image(); img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const g = cv.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0, sz.x, sz.y);
+      const d = g.getImageData(0, 0, sz.x, sz.y), a = d.data;
+      for (let i = 0; i < a.length; i += 4) {
+        const v = a[i + 3] ? SATLUT.get((a[i] << 16) | (a[i + 1] << 8) | a[i + 2]) : undefined;
+        if (!v) { a[i + 3] = 0; continue; }
+        const t = v / 100; a[i] = 120 - 100 * t; a[i + 1] = 90 - 30 * t; a[i + 2] = 210 - 50 * t; a[i + 3] = 70 + 180 * t;
+      }
+      g.putImageData(d, 0, 0); done(null, cv);
+    };
+    img.onerror = () => done(null, cv);
+    img.src = `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_L3_Snow_Cover_Monthly_Average_Pct/default/${this.options.time}/GoogleMapsCompatible_Level6/${c.z}/${c.y}/${c.x}.png`;
+    return cv;
+  },
+});
+
+function renderSat() {
+  if (!satMap) return;
+  if (satLayer) { satMap.removeLayer(satLayer); satLayer = null; }
+  const y = tmYear, note = document.getElementById("satNote");
+  if (y < 2001) { note.textContent = T(`${y}年の冬はまだ衛星（MODIS、2000年打ち上げ）がありません。2001年以降を選んでください。`, `No MODIS satellite yet in winter ${y} (launched 2000). Pick 2001 or later.`); return; }
+  let ym = `${y}-${satMonth}`; if (ym === "2016-02") ym = "2016-01";
+  satLayer = new SatLayer({ time: ym + "-01", maxNativeZoom: 6, maxZoom: 9, opacity: 1, attribution: "NASA GIBS / MODIS" }).addTo(satMap);
+  const k = satMonth === "04" ? "cov_apr" : "cov_feb", i = D.winters.indexOf(y), v = D.hokkaido.series[k][i], last = D.hokkaido.series[k][D.winters.length - 1];
+  const m0 = D.hokkaido.series[k].slice(D.winters.indexOf(2001), D.winters.indexOf(2001) + 10);
+  note.textContent = T(`${ym.replace("-", "年")}月：北海道の陸地の${fmt(v, 0)}%が雪（濃い青ほど一か月ずっと雪）。2000年代（2001〜2010年）平均${fmt(mean(m0), 0)}%、最新（2026年）${fmt(last, 0)}%。`,
+    `${ym}: ${fmt(v, 0)}% of Hokkaido's land under snow (darker blue = snow all month). 2000s average (2001–2010) ${fmt(mean(m0), 0)}%, latest (2026) ${fmt(last, 0)}%.`) + (ym === "2016-01" ? T("（2016年2月は衛星データがないため1月）", " (Feb 2016 missing, January shown)") : "");
+}
+
 function tipsHTML(p) {
   const near = p.dist <= 40, t = k => (near ? p.st.trend[k] : p.cell.trend[k]) || { slope10: 0, p: 1 };
   const L = [];
   if (t("heavy").slope10 > 0) L.push(T("重い雪の日が増える方向です。屋根の雪下ろしは早めに、湿った雪による倒木・停電にも備えましょう。", "Heavy-snow days are rising: clear roofs early and prepare for fallen trees and power cuts from wet snow."));
   if (t("icy").slope10 > 0) L.push(T("つるつる路面の日が増える方向です。滑り止め付きの靴や砂まきを用意しましょう。", "Icy-road days are rising: use anti-slip shoes and grit."));
   if (t("icy").slope10 < 0) L.push(T("つるつる路面の日は減る方向ですが、0℃前後の朝は引き続き注意が必要です。", "Icy-road days are falling, but mornings around 0 °C still need care."));
+  const sp = (near ? p.st.trend.cov_apr : p.cell.trend.cov_apr);
+  if (sp && sp.slope10 < 0) L.push(T("春の雪どけが早まる方向です（衛星）。春スキーや雪解け水・融雪期の川の増水の時期が変わる可能性があります。", "Spring snow is melting earlier (satellite): spring skiing and meltwater timing may shift."));
   if (t("share").slope10 < 0) L.push(T("パウダーの割合が下がる方向です。スキー場や観光は、雪質の変化を見ながら計画を。", "The powder share is falling: ski areas and tourism should watch snow quality."));
   if (t("share").slope10 >= 0) L.push(T("パウダーの割合はまだ保たれています。北海道の雪の魅力を守るため、毎年の変化を見ていきましょう。", "The powder share is holding for now; keep watching it every winter."));
   L.push(T("「確か」でない傾向は、断定せず参考として見てください。", "Treat trends not marked “certain” as hints, not facts."));
@@ -130,19 +193,20 @@ function render() {
   chartRefs.forEach(c => c.destroy()); chartRefs = [];
   const [p, p2] = places;
   document.getElementById("places").innerHTML = places.map((q, i) => `<div class="card place ${i ? "b" : ""}"><h3>${q.label}</h3><p>${T(`最寄りの地上観測：気象庁${q.st.ja}（${fmt(q.dist, 0)}km）・NASAのマス：北緯${q.cell.lat}° 東経${q.cell.lon}°`, `Nearest ground station: JMA ${q.st.en} (${fmt(q.dist, 0)} km) · NASA cell ${q.cell.lat}°N ${q.cell.lon}°E`)}</p></div>`).join("");
-  const keys = ["powder", "heavy", "icy", "share"];
+  const keys = ["powder", "heavy", "icy", "share", "spring"];
   document.getElementById("cards").innerHTML = keys.map((k, i) => cardHTML(k, p, i)).join("");
   keys.forEach((k, i) => drawChart("c" + i, p, k, p2));
   document.getElementById("tmYear").textContent = tmYear;
   document.getElementById("tmSlider").value = tmYear;
   document.getElementById("tm").innerHTML = tmHTML(p, tmYear) + (p2 ? tmHTML(p2, tmYear).split('<div class="tmc">').slice(0, 2).join('<div class="tmc">') : "");
+  renderSat();
   document.getElementById("tips").innerHTML = tipsHTML(p);
   document.getElementById("trust").innerHTML = trustHTML(p);
 }
 
 function renderLayerChips() {
   const el = document.getElementById("layerChips");
-  el.innerHTML = ["heavy", "powder", "icy", "share"].map(k => `<button class="chip ${k === layerKey ? "on" : ""}" data-k="${k}">${KEYS[k].icon} ${T(KEYS[k].ja, KEYS[k].en)}</button>`).join("");
+  el.innerHTML = ["heavy", "powder", "icy", "share", "spring"].map(k => `<button class="chip ${k === layerKey ? "on" : ""}" data-k="${k}">${KEYS[k].icon} ${T(KEYS[k].ja, KEYS[k].en)}</button>`).join("");
   el.querySelectorAll(".chip").forEach(b => (b.onclick = () => { layerKey = b.dataset.k; renderLayerChips(); drawMap2(); }));
 }
 
@@ -155,20 +219,20 @@ function drawMap2() {
   if (!map2 || !D) return;
   if (layer2) map2.removeLayer(layer2);
   layer2 = L.layerGroup().addTo(map2);
-  const max = layerKey === "share" ? 6 : 4;
+  const tk = KEYS[layerKey].sat || layerKey, max = layerKey === "spring" ? 15 : layerKey === "share" ? 6 : 4;
   D.cells.forEach(c => {
-    const t = c.trend[layerKey]; if (!t) return;
+    const t = c.trend[tk]; if (!t) return;
     L.rectangle([[c.lat - .25, c.lon - .25], [c.lat + .25, c.lon + .25]], { weight: t.p < 0.05 ? 2.5 : 0.5, color: t.p < 0.05 ? css("--ink") : "#ffffff", fillColor: color(t.slope10, max), fillOpacity: 1 })
-      .bindTooltip(`NASA ${c.lat}°N ${c.lon}°E<br>${T(KEYS[layerKey].ja, KEYS[layerKey].en)}: ${fmt(t.slope10)}${T(KEYS[layerKey].unit, KEYS[layerKey].unit_en)}/${T("10年", "decade")} (p=${fmt(t.p, 2)})`).addTo(layer2)
+      .bindTooltip(`NASA ${c.lat}°N ${c.lon}°E<br>${T(KEYS[layerKey].ja, KEYS[layerKey].en)}: ${fmt(t.slope10)}${(KEYS[layerKey].sat ? T("ポイント", " pts") : T(KEYS[layerKey].unit, KEYS[layerKey].unit_en))}/${T("10年", "decade")} (p=${fmt(t.p, 2)})`).addTo(layer2)
       .on("click", () => choose(c.lat, c.lon, T(`北緯${c.lat}° 東経${c.lon}°`, `${c.lat}°N ${c.lon}°E`)));
   });
   D.stations.forEach(s => {
-    const t = s.trend[layerKey]; if (!t) return;
+    const t = s.trend[tk]; if (!t || KEYS[layerKey].sat) return;
     L.circleMarker([s.lat, s.lon], { radius: 9, weight: t.p < 0.05 ? 3 : 1.5, color: css("--ink"), fillColor: color(t.slope10, max), fillOpacity: 1 })
       .bindTooltip(`${T("気象庁", "JMA")} ${T(s.ja, s.en)}<br>${fmt(t.slope10)}${T(KEYS[layerKey].unit, KEYS[layerKey].unit_en)}/${T("10年", "decade")} (p=${fmt(t.p, 2)})`).addTo(layer2)
       .on("click", () => choose(s.lat, s.lon, T(s.ja, s.en)));
   });
-  document.getElementById("legend").textContent = T("色：赤＝増えた、青＝減った（濃いほど大きい）。太い枠＝統計的に有意（p<0.05）。四角＝NASAの約50kmマス、丸＝気象庁の観測所。", "Colour: red = increased, blue = decreased (darker = larger). Thick outline = significant (p < 0.05). Squares = NASA ~50 km cells, circles = JMA stations.");
+  document.getElementById("legend").textContent = (KEYS[layerKey].sat ? T("4月に雪が残る割合の変化（NASA MODIS衛星、2001〜2026年）。", "Change in April snow cover (NASA MODIS satellite, 2001–2026). ") : "") + T("色：赤＝増えた、青＝減った（濃いほど大きい）。太い枠＝統計的に有意（p<0.05）。四角＝NASAの約50kmマス、丸＝気象庁の観測所。", "Colour: red = increased, blue = decreased (darker = larger). Thick outline = significant (p < 0.05). Squares = NASA ~50 km cells, circles = JMA stations.");
 }
 
 function renderFacts() {
@@ -180,6 +244,7 @@ function renderFacts() {
   document.getElementById("facts").innerHTML = [
     ["", `${stUp}/${st.length}`, T(`気象庁の観測所で「重い雪の日」が増える方向（うち${stSig}か所は統計的に有意）`, `JMA stations where heavy-snow days rose (${stSig} significant)`)],
     ["", `${ceSig}/${ce.length}`, T(`NASAの約50kmマスで「重い雪の日」が有意に増加（有意に減ったマスは${ceDown}）`, `NASA ~50 km cells with a significant rise in heavy-snow days (${ceDown} significant falls)`)],
+    ["s", `${D.cells.filter(c => c.trend.cov_apr && c.trend.cov_apr.slope10 < 0).length}/${D.cells.filter(c => c.trend.cov_apr).length}`, T(`NASA衛星（MODIS）で「4月に残る雪」が減ったマス（うち${D.cells.filter(c => c.trend.cov_apr && c.trend.cov_apr.slope10 < 0 && c.trend.cov_apr.p < 0.05).length}は有意）。北海道全体で10年に${fmt(-D.hokkaido.trend.cov_apr.slope10, 0)}ポイント減`, `NASA cells where April snow cover fell, seen by the MODIS satellite (${D.cells.filter(c => c.trend.cov_apr && c.trend.cov_apr.slope10 < 0 && c.trend.cov_apr.p < 0.05).length} significant). All Hokkaido: −${fmt(-D.hokkaido.trend.cov_apr.slope10, 0)} points per decade`)],
     ["p", `${pUp}/${cp.length}`, T(`NASAのマスで「パウダーの日」が増えた数（有意に減ったマスは${pDown}）`, `NASA cells where powder days rose (${pDown} significant falls)`)],
   ].map(([c, b, t]) => `<div class="fact ${c}"><b>${b}</b><span>${t}</span></div>`).join("");
 }
@@ -210,6 +275,7 @@ function renderAbout() {
     T("期間：1992〜2026年の冬（前年12月〜3月、1月の年で表示）", "Period: winters 1992–2026 (Dec–Mar, labelled by January)"),
     T("雪質の目安：雪の日（気象庁は降雪1cm以上、NASAは降雪1mm（水換算）以上）の日平均気温が−5℃以下ならパウダー、−2℃より暖かければ重い雪", "Snow quality rule of thumb: on a snow day (JMA ≥ 1 cm snowfall, NASA ≥ 1 mm water equivalent), daily mean ≤ −5 °C = powder, > −2 °C = heavy"),
     T("NASA POWER 日別データ（MERRA-2）：気温・降雪・降水・風", "NASA POWER daily (MERRA-2): temperature, snowfall, precipitation, wind"),
+    T("NASA MODIS（Terra）月平均の雪のおおわれ方（NASA GIBS地図タイルを公式カラーマップで％に戻して集計）：12月・2月・4月、2001〜2026年", "NASA MODIS (Terra) monthly snow cover (NASA GIBS tiles turned back into % with the official colour map): Dec, Feb, Apr, 2001–2026"),
     T("JAXA GSMaP 月別衛星降水（JAXA Earth API）：冬の降水量の傾向を確認", "JAXA GSMaP monthly satellite precipitation (JAXA Earth API): cross-check of winter precipitation"),
     T("気象庁 過去の気象データ：北海道10観測所の日別値（降雪・最深積雪・気温・風速）", "JMA historical data: daily values at 10 Hokkaido stations (snowfall, snow depth, temperature, wind)"),
     T("体感温度：気温と平均風速から風冷指数（カナダ気象局の式）で計算した目安", "Feels-like: wind-chill index (Environment Canada formula) from temperature and mean wind, as a rough guide"),
@@ -231,6 +297,9 @@ async function init() {
   const tiles = () => L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png", { maxZoom: 14, attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>' });
   map = L.map("map", { scrollWheelZoom: false }).setView([43.4, 142.6], 6); tiles().addTo(map);
   map.on("click", e => choose(e.latlng.lat, e.latlng.lng));
+  SATLUT = new Map(D.modis_lut.map(([r, g, b, v]) => [(r << 16) | (g << 8) | b, v]));
+  satMap = L.map("satmap", { scrollWheelZoom: false }).setView([43.4, 142.8], 6); tiles().addTo(satMap);
+  document.querySelectorAll("#satChips .chip").forEach(b => (b.onclick = () => { satMonth = b.dataset.m; document.querySelectorAll("#satChips .chip").forEach(x => x.classList.toggle("on", x === b)); renderSat(); }));
   map2 = L.map("map2", { scrollWheelZoom: false }).setView([43.4, 142.8], 6); tiles().addTo(map2);
   document.getElementById("shareBtn").onclick = shareCard;
   document.getElementById("lang").onclick = () => { LANG = LANG === "ja" ? "en" : "ja"; applyLang(); };
@@ -240,7 +309,7 @@ async function init() {
     () => alert(T("位置情報を取得できませんでした", "Could not get your location"))) : null;
   const sl = document.getElementById("tmSlider");
   sl.oninput = () => { tmYear = +sl.value; if (places.length) render(); };
-  document.querySelectorAll(".tm .chip").forEach(b => (b.onclick = () => { tmYear = +b.dataset.y; if (places.length) render(); }));
+  document.querySelectorAll(".tm-ctl .chip").forEach(b => (b.onclick = () => { tmYear = +b.dataset.y; if (places.length) render(); }));
   applyLang();
   choose(QUICK[0][2], QUICK[0][3], T(QUICK[0][0], QUICK[0][1]));
   window.scrollTo(0, 0);

@@ -60,3 +60,6 @@ footer{text-align:center;font-size:12px;color:var(--muted);padding:24px 16px}
 .fact.p b{color:var(--powder)}
 .fact span{font-size:14px;color:var(--muted)}
 .share{margin-top:14px}
+.fact.s b{color:var(--blue)}
+.sat{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+#satmap{height:300px;border-radius:12px;margin-top:8px}
