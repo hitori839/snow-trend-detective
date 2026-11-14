@@ -12,9 +12,15 @@ def chunks(w):
     d0 = dt.date(w - 1, 12, 1); d1 = dt.date(w, 3, 31)
     while d0 <= d1:
         e = min(d0 + dt.timedelta(days=59), d1); yield d0, e; d0 = e + dt.timedelta(days=1)
+import sys
+REDO = sys.argv[1:]  # chunk start dates (YYYY-MM-DD) to fetch again
 for w in range(2001, 2027):
     for a, b in chunks(w):
-        if res[str(STATIONS[0][1])].get(a.strftime("%Y%m%d")) is not None: continue
+        if REDO:
+            if a.isoformat() not in REDO: continue
+            for st in res.values():
+                for i in range((b - a).days + 1): st.pop((a + dt.timedelta(days=i)).strftime("%Y%m%d"), None)
+        elif any(res[str(STATIONS[0][1])].get((a + dt.timedelta(days=i)).strftime("%Y%m%d")) is not None for i in range((b - a).days + 1)): continue
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 d = (je.ImageCollection(collection="JAXA.EORC_GSMaP_standard.Gauge.00Z-23Z.v6_daily", ssl_verify=True)
@@ -23,8 +29,10 @@ for w in range(2001, 2027):
         except Exception as e:
             print("fail", a, e, flush=True); continue
         img = d.raster.img[..., 0]; n = img.shape[0]
-        days = [a + dt.timedelta(days=i) for i in range((b - a).days + 1)]
-        if n != len(days): print("warn", a, n, len(days), flush=True); days = days[:n]
+        # real image dates come from the STAC ids ("YYYY-MM/DD/"); some days are missing in the archive
+        days = [dt.date(int(i[:4]), int(i[5:7]), int(i[8:10])) for i in d.stac_date.id]
+        if n != len(days): print("skip (image/date count mismatch)", a, n, len(days), flush=True); continue
+        if n != (b - a).days + 1: print("gaps", a, b, n, flush=True)
         for _, sb, _, _, la, lo in STATIONS:
             r, c = int((LAT0 - la) / RES), int((lo - LON0) / RES)
             for i, day in enumerate(days):
