@@ -196,7 +196,7 @@ function satCardHTML(k, p, idx) {
   return `<div class="card kc"><h3>${K.icon} ${T(K.ja, K.en, K.ko)}</h3><div class="sub">${T(K.sub_ja, K.sub_en, K.sub_ko)}</div>${regionHTML(k)}<div class="here mono">${T("この街", "This town", "이 동네")} · ${placeLabel(p)}</div>
   <div class="nums"><span>${T("2000年代", "2000s", "2000년대")} <b class="big">${fmt(a, dg)}</b>${u}</span><span>→ ${T("2020年代", "2020s", "2020년대")} <b class="big">${fmt(b, dg)}</b>${u}</span>
   <span class="arrow">${arrow} ${tr ? fmt(tr.slope10, dg) : "–"}${K.stOnly ? u : T("ポイント", " pts", "%p")}/${T("10年", "decade", "10년")}</span></div>
-  <div class="cbox"><canvas id="c${idx}"></canvas></div><span class="badge ${cls} small">${txt}</span>${actHTML(k)}
+  <div class="cbox"><canvas id="c${idx}"></canvas></div><span class="badge ${cls} small">${txt}</span>${k === "dens" && a && b ? roofHTML(a, b) : ""}${actHTML(k)}
   <div class="cmpline">${foot}</div></div>`;
 }
 function stormUp() {
@@ -216,6 +216,12 @@ function regionHTML(k) {
   const dir = F.direction === "up" ? T("増加", "up", "증가") : T("減少", "down", "감소");
   return `<div class="region ${m}">${mk} ${T(`北海道全体：${F.of}マス中${F.cells_sig}マスで有意に${dir}（偶然の確率 ${fmt(F.p_field * 100, 1)}%）`, `All Hokkaido: ${F.cells_sig} of ${F.of} cells significantly ${dir} (chance ${fmt(F.p_field * 100, 1)}%)`, `홋카이도 전체: ${F.of}칸 중 ${F.cells_sig}칸에서 유의하게 ${dir} (우연일 확률 ${fmt(F.p_field * 100, 1)}%)`)}</div>`;
 }
+// Roof load of 1 m of NEW snow: 1 cm of snow = 1/ratio mm of water = 1/ratio kg per m2  ->  100/ratio kg/m2
+const roofHTML = (a, b) => { const r0 = 100 / a, r1 = 100 / b;
+  return `<div class="roof">🏠 ${T(`新しく積もった雪1mが屋根にかける重さ：<b>${fmt(r0, 0)} → ${fmt(r1, 0)} kg/m²（${r1 >= r0 ? "+" : ""}${fmt(100 * (r1 - r0) / r0, 0)}%）</b>。同じ深さでも、雪下ろしで動かす重さが増えています。`,
+    `Weight of 1 m of new snow on a roof: <b>${fmt(r0, 0)} → ${fmt(r1, 0)} kg/m² (${r1 >= r0 ? "+" : ""}${fmt(100 * (r1 - r0) / r0, 0)}%)</b>. Same depth, more weight to clear.`,
+    `새로 쌓인 눈 1m가 지붕에 주는 무게: <b>${fmt(r0, 0)} → ${fmt(r1, 0)} kg/m² (${r1 >= r0 ? "+" : ""}${fmt(100 * (r1 - r0) / r0, 0)}%)</b>. 같은 깊이라도 치워야 할 무게가 늘었습니다.`)}
+    <span class="note">${T("降ったばかりの雪の目安です。積もった雪は押し固められて、さらに重くなります。", "For freshly fallen snow; settled snow gets heavier still.", "갓 내린 눈 기준입니다. 쌓인 눈은 눌려서 더 무거워집니다.")}</span></div>`; };
 const actHTML = k => (ACT[k] ? `<div class="act"><b>${T("だから", "So", "그래서")}</b> ${T(...ACT[k])}</div>` : "");
 const WHY = () => `<div class="why">${T("なぜずれる？ 地上は街の中の1地点、NASAは約50km四方の平均です。街の熱や海・山の近さで、1か所だけの向きはずれることがあります。だから北海道全体でも確かめています。",
   "Why can they differ? The ground station is one point in town; NASA averages a ~50 km cell. Urban heat, coast or mountains can tilt a single spot, which is why we also check all of Hokkaido.",
