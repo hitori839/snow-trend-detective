@@ -321,3 +321,23 @@ table.zt b{color:var(--heavy);font-family:var(--mono)}
 .gmark .gdot{position:static;transform:none;flex:0 0 12px}
 .gmark span{display:flex;flex-direction:column;background:rgba(11,22,40,.78);border:1px solid rgba(126,240,196,.5);border-radius:6px;padding:3px 8px;color:#eaf2ff;font:600 12px var(--sans)}
 .gmark small{font:500 11px var(--sans);color:#ffd166}
+
+/* timeline map + means */
+.tlmapbox{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+#tlmap{height:340px;border-radius:6px;border:1px solid var(--line)}
+.tlicon{font-size:14px;text-align:center;line-height:18px}
+.means{margin-top:14px;border:1px solid var(--line);border-radius:6px;padding:12px 14px;background:rgba(0,0,0,.2)}
+.means ul{list-style:none;margin:6px 0 8px;padding:0}
+.means li{padding:4px 0;font-size:14px}
+.means li b{display:inline-block;width:22px;color:var(--heavy)}
+.means li.light b{color:var(--blue)} .means li.warn b{color:var(--warn)}
+/* consequences */
+.cq{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.cqi{display:flex;gap:12px;border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:rgba(0,0,0,.2)}
+.cqi .cqa{font-size:22px;line-height:1.1;color:var(--muted)}
+.cqi.up .cqa{color:var(--heavy)} .cqi.dn .cqa{color:var(--blue)}
+.cqi h4{margin:0 0 3px;font-size:15px}
+.cqi p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.55}
+.cqi a{color:var(--lime)}
+.kc>.nasa{grid-column:1;font-size:11.5px;color:var(--ink);margin-top:6px;padding:4px 8px;border-left:2px dashed var(--ink);background:rgba(255,255,255,.04)}
+@media (max-width:900px){.cq{grid-template-columns:1fr}}

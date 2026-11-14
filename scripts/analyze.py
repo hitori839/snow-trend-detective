@@ -291,6 +291,30 @@ for x in CAUSE["stations"]:
     x["precip_change_mm"] = round(float(dP), 1); x["explained_change_tp"] = round(float(coef[0] * dT + coef[1] * dP), 2)
     tp_sum += coef[0] * dT + coef[1] * dP
 CAUSE["explained_share_tp"] = round(tp_sum / obs_sum, 3) if obs_sum else None
+# Other candidate causes: Arctic Oscillation (NOAA CPC monthly AO, Dec-Mar mean) and ENSO (NOAA CPC ONI, DJF).
+# Do they have a 35-year trend, and do they add explanatory power year to year?
+AOm = {}
+for l in open(os.path.join(ROOT, "data", "indices", "ao_monthly_cpc.txt")):
+    y_, m_, v_ = l.split(); AOm[(int(y_), int(m_))] = float(v_)
+ONIs = {}
+for l in open(os.path.join(ROOT, "data", "indices", "oni_cpc.txt")).readlines()[1:]:
+    se, y_, _, an = l.split(); ONIs[(se, int(y_))] = float(an)
+AOw = [sum(AOm[k] for k in ((w - 1, 12), (w, 1), (w, 2), (w, 3))) / 4 for w in range(W0, W1 + 1)]
+ONIw = [ONIs[("DJF", w)] for w in range(W0, W1 + 1)]
+r2a = []; r2b = []
+for x in CAUSE["stations"]:
+    st = next(y for y in stations if y["id"] == x["id"])
+    if not st.get("power"): continue
+    dd = _jdays[[s_[1] for s_ in STATIONS if os.path.exists(os.path.join(ROOT, "data", "raw", "jma", f"{s_[1]}.json"))].index(x["id"])]
+    T_ = winter_mean(dd); P_ = st["power"]["series"]["precip"]; H_ = st["series"]["heavy"]
+    idx = [i for i in range(len(H_)) if H_[i] is not None and T_[i] is not None and P_[i] is not None]
+    yr = np.array([W0 + i for i in idx], float); h = _detr([H_[i] for i in idx], yr)
+    X1 = np.column_stack([_detr([T_[i] for i in idx], yr), _detr([P_[i] for i in idx], yr), np.ones(len(idx))])
+    X2 = np.column_stack([X1[:, :2], _detr([AOw[i] for i in idx], yr), _detr([ONIw[i] for i in idx], yr), np.ones(len(idx))])
+    def _r2(X):
+        c_ = np.linalg.lstsq(X, h, rcond=None)[0]; e = h - X @ c_; return 1 - e.var() / h.var()
+    r2a.append(_r2(X1)); r2b.append(_r2(X2))
+CAUSE["modes"] = {"ao_trend": mk(AOw), "oni_trend": mk(ONIw), "r2_tp": round(float(np.mean(r2a)), 2), "r2_tp_ao_enso": round(float(np.mean(r2b)), 2)}
 CAUSE["stations_precip_up"] = sum(1 for x in CAUSE["stations"] if x.get("precip_change_mm", 0) > 0)
 # where does the change happen? winter mean temperature of each NASA cell vs its heavy-snow trend
 for c, wm in zip(cells, _wm_cells):
@@ -315,7 +339,7 @@ CAUSE["world_zones"] = WZ
 CAUSE["stations_warm_sig"] = sum(1 for x in CAUSE["stations"] if x["temp_trend"]["slope10"] > 0 and x["temp_trend"]["p"] < .05)
 CAUSE["stations_positive_link"] = sum(1 for x in CAUSE["stations"] if x["days_per_degC"] > 0)
 print("cause", json.dumps({k: v for k, v in CAUSE.items() if k not in ("hok_temp", "stations", "zones", "world_zones")}))
-print("zones", CAUSE["zones"]); print("world zones", CAUSE["world_zones"])
+print("modes", CAUSE["modes"]); print("zones", CAUSE["zones"]); print("world zones", CAUSE["world_zones"])
 
 # Impact: Sapporo fall-injury ambulance transports (Dec-Mar) vs JMA Sapporo snow indicators.
 # Both rise over time (ageing population, more icy/heavy days), so we also correlate year-to-year CHANGES.

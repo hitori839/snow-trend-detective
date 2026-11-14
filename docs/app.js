@@ -1,6 +1,6 @@
 "use strict";
 let fallChart = null, FC = null, fcKey = "", TL = 32, whyCharts = [];
-const TL_FUT = [2030, 2035, 2040, 2045, 2050];   // timeline: 0..34 = winters 1992..2026, 35 = next 7 days, 36..40 = trend to 2030..2050
+const TL_FUT = [2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035, 2036];   // timeline: 0..34 = winters 1992..2026, 35 = next 7 days, 36..45 = +1..+10 years (trend)
 let satMap, satLayer, satMonth = "04", SATLUT = null;
 let LANG = "ja", D = null, map, map2, layer2, markers = [], places = [], chartRefs = [], tmYear = 2024, layerKey = "heavy";
 const T = (ja, en, ko) => (LANG === "ja" ? ja : LANG === "ko" ? (ko ?? en) : en);
@@ -10,8 +10,8 @@ const SIDE = {
     ["35回の冬（1992〜2026年）の雪の日を一日ずつ数え、NASA・JAXA・気象庁のデータがそろったときだけ「確か」と言う、街ごとの雪質カルテ。", "We counted every snow day of 35 winters (1992–2026) and only say “certain” when NASA, JAXA and JMA data agree — a snow-quality chart for your town.", "35번의 겨울(1992~2026년) 동안 눈 온 날을 하루씩 세고, NASA·JAXA·기상청 자료가 맞아떨어질 때만 「확실」이라고 말하는 동네별 눈 품질 카르테."]],
   karte: [["雪質カルテ", "Snow-quality chart", "눈 품질 카르테"], ["あなたの街の、雪の35年。", "Your town's 35 winters of snow.", "우리 동네 눈의 35년."],
     ["北海道全体で確かめられた5つの変化を、あなたの街の数字と「だから何をするか」で見ます。", "Five changes confirmed across Hokkaido, shown with your town's numbers and what to do about them.", "홋카이도 전체에서 확인된 5가지 변화를, 우리 동네 숫자와 '그래서 무엇을 할지'로 봅니다."]],
-  time: [["雪の年表", "Snow timeline", "눈의 연표"], ["1992年から、明日、そして2050年へ。", "From 1992 to tomorrow, and on to 2050.", "1992년에서 내일, 그리고 2050년으로."],
-    ["ひとつのスライダーで、あの冬の雪（観測）、この先7日（予報）、今の傾きがつづいた未来（推定）をたどります。", "One slider: past winters (observed), the next 7 days (forecast) and a future that continues today's trend (estimate).", "슬라이더 하나로 그 겨울의 눈(관측), 앞으로 7일(예보), 지금 추세가 이어진 미래(추정)를 따라갑니다."]],
+  time: [["雪の年表", "Snow timeline", "눈의 연표"], ["1992年から、明日、そして10年後へ。", "From 1992 to tomorrow, and ten years on.", "1992년에서 내일, 그리고 10년 후로."],
+    ["ひとつのスライダーで、あの冬の雪（観測）、この先7日（予報）、今の傾きがつづいた1〜10年後（推定）を、数字と地図でたどります。", "One slider: past winters (observed), the next 7 days (forecast) and 1–10 years ahead if today's trend continues (estimate), in numbers and on a map.", "슬라이더 하나로 그 겨울의 눈(관측), 앞으로 7일(예보), 지금 추세가 이어진 1~10년 후(추정)를 숫자와 지도로 따라갑니다."]],
   why: [["なぜ・どこで", "Why & where", "왜·어디서"], ["何が雪を重くし、次はどこが変わるのか。", "What made the snow heavier, and where it changes next.", "무엇이 눈을 무겁게 했고, 다음은 어디가 바뀌나."],
     ["気温と水分で原因を分け、変わりやすい場所を北海道と世界で探します。わからないことも、そのまま書きます。", "We split the cause into warming and moisture, and look for the places most likely to change, in Hokkaido and worldwide. What we cannot say, we say too.", "기온과 수분으로 원인을 나누고, 바뀌기 쉬운 곳을 홋카이도와 세계에서 찾습니다. 모르는 것도 그대로 적습니다."]],
 };
@@ -230,7 +230,7 @@ function renderSide() {
 function route() {
   const v = (location.hash.match(/^#\/(\w+)/) || [])[1];
   VIEW = SIDE[v] ? v : v === "future" ? "time" : "home";
-  if (v === "future") TL = 40;
+  if (v === "future") TL = 45;
   document.body.dataset.view = VIEW;
   document.querySelectorAll(".view").forEach(e => (e.hidden = e.dataset.view !== VIEW));
   document.querySelectorAll(".navlinks a").forEach(a => a.classList.toggle("on", a.dataset.v === VIEW));
@@ -354,6 +354,7 @@ function cardHTML(k, p, idx) {
   return `<div class="card kc"><h3>${K.icon} ${T(K.ja, K.en, K.ko)}</h3><div class="sub">${T(K.sub_ja, K.sub_en, K.sub_ko)}</div>${regionHTML(k)}<div class="here mono">${T("この街", "This town", "이 동네")} · ${placeLabel(p)}</div>
   <div class="nums"><span>${T("1990年代", "1990s", "1990년대")} <b class="big">${fmt(a, 0)}</b>${unit}</span><span>→ ${T("2020年代", "2020s", "2020년대")} <b class="big">${fmt(b, 0)}</b>${unit}</span>
   <span class="arrow">${arrow} ${tr ? fmt(tr.slope10) : "–"}${unit}/${T("10年", "decade", "10년")}</span></div>
+  ${near ? `<div class="nasa mono">NASA POWER · ${fmt(mean(p.cell.series[k].slice(0, 10)), 0)} → ${fmt(mean(p.cell.series[k].slice(-10)), 0)}${unit} · ${p.cell.trend[k] ? (p.cell.trend[k].slope10 > 0 ? "+" : "") + fmt(p.cell.trend[k].slope10) + unit + "/" + T("10年", "dec", "10년") + " p=" + fmt(p.cell.trend[k].p, 2) : "–"}</div>` : ""}
   <div class="cbox"><canvas id="c${idx}"></canvas></div><span class="badge ${cls} small">${txt}</span>${kind === "opp" ? WHY() : ""}${actHTML(k)}
   <div class="cmpline">${near ? T(`地上：気象庁${p.st.ja}（${fmt(p.dist, 0)}km）`, `Ground: JMA ${p.st.en} (${fmt(p.dist, 0)} km)`, `지상: 기상청 ${STKO[p.st.en] || p.st.en} (${fmt(p.dist, 0)}km)`) : T("地上観測が40km以内にないためNASAデータで表示", "No ground station within 40 km, NASA data shown", "40km 안에 지상 관측소가 없어 NASA 자료로 표시")} · NASA ${p.cell.trend[k] ? fmt(p.cell.trend[k].slope10) + unit + "/" + T("10年", "dec", "10년") + " (p=" + fmt(p.cell.trend[k].p, 2) + ")" : "–"}${near && tr ? " · " + T("地上", "ground", "지상") + " p=" + fmt(tr.p, 2) : ""}</div></div>`;
 }
@@ -372,7 +373,7 @@ function drawChart(id, p, k, p2) {
     return;
   }
   const ds = [{ label: near ? T("地上（気象庁）", "Ground (JMA)", "지상 (기상청)") : "NASA", data: (near ? p.st.series[k] : p.cell.series[k]), borderColor: css(KEYS[k].color), backgroundColor: "transparent", pointRadius: 0, borderWidth: 2, tension: .25 },
-    { label: "NASA POWER", data: p.cell.series[k], borderColor: css("--gray"), borderDash: [4, 3], pointRadius: 0, borderWidth: 1.5, tension: .25, hidden: !near }];
+    { label: T("NASA POWER（約50kmマス）", "NASA POWER (~50 km cell)", "NASA POWER (약 50km 칸)"), data: p.cell.series[k], borderColor: css("--ink"), borderDash: [5, 4], pointRadius: 0, borderWidth: 2, tension: .25, hidden: !near }];
   if (p2) ds.push({ label: placeLabel(p2), data: (p2.dist <= 40 ? p2.st.series[k] : p2.cell.series[k]), borderColor: css("--heavy"), pointRadius: 0, borderWidth: 2, tension: .25 });
   chartRefs.push(new Chart(document.getElementById(id), { type: "line", data: { labels: yrs, datasets: ds },
     options: { animation: false, maintainAspectRatio: false, plugins: { legend: { display: true, labels: { boxWidth: 10, font: { size: 11 }, color: css("--muted") } } },
@@ -482,7 +483,7 @@ function renderEntries(p) {
   const near = p.dist <= 40, src = near ? p.st : p.cell, h = src.series.heavy, f = senFit(h, D.winters[0]);
   const s = p.st.series, j = D.winters.length - 1, i24 = D.winters.indexOf(2024);
   const E = [["karte", T("雪質カルテ", "Snow chart", "눈 품질 카르테"), T("重い雪の日", "Heavy-snow days", "무거운 눈의 날"), `${fmt(mean(h.slice(0, 10)), 0)} → ${fmt(mean(h.slice(-10)), 0)}${T("日", " days", "일")}`, T("1990年代 → 2020年代", "1990s → 2020s", "1990년대 → 2020년대")],
-    ["time", T("雪の年表", "Snow timeline", "눈의 연표"), T("重い雪の日 · 2050年（推定）", "Heavy-snow days · 2050 (trend)", "무거운 눈의 날 · 2050년 (추정)"), `${f ? fmt(Math.max(0, f.at(2050)), 0) : "–"}${T("日", " days", "일")}`, T("1992 → 明日 → 2050、今の傾きのまま（予報ではない）", "1992 → tomorrow → 2050, today's trend (not a forecast)", "1992 → 내일 → 2050, 지금 기울기 그대로 (예보 아님)")],
+    ["time", T("雪の年表", "Snow timeline", "눈의 연표"), T("重い雪の日 · 10年後（推定）", "Heavy-snow days · in 10 years (trend)", "무거운 눈의 날 · 10년 후 (추정)"), `${f ? fmt(Math.max(0, f.at(2036)), 0) : "–"}${T("日", " days", "일")}`, T("1992 → 明日 → 10年後、今の傾きのまま（予報ではない）", "1992 → tomorrow → +10 years, today's trend (not a forecast)", "1992 → 내일 → 10년 후, 지금 기울기 그대로 (예보 아님)")],
     ["why", T("なぜ・どこで", "Why & where", "왜·어디서"), T("気温と水分で説明できる割合", "Explained by warming + moisture", "기온·수분으로 설명되는 비율"), `${fmt(D.cause.explained_share_tp * 100, 0)}%`, T("次に変わりやすい場所も", "and where it changes next", "다음에 바뀔 곳도")]];
   document.getElementById("entries").innerHTML = E.map(([v, t, k, n, sub]) => `<a class="entry" href="#/${v}"><div class="et"><h3>${t}</h3><p class="note">${placeLabel(p)}</p></div>
     <div class="estat"><span class="k mono">${k}</span><b class="mono">${n}</b><span class="note">${sub}</span></div><span class="go mono">→</span></a>`).join("");
@@ -502,13 +503,14 @@ function notYetHTML(p) {
 
 
 // ---------- snow timeline: one slider from 1992 to tomorrow to 2050 ----------
-const PY = () => (TL >= 36 ? TL_FUT[TL - 36] : 2050);
+const PY = () => (TL >= 36 ? TL_FUT[TL - 36] : 2036);
 function tlFrame() {
   const kind = TL <= 34 ? "past" : TL === 35 ? "fc" : "fut";
   const sl = document.getElementById("tmSlider"); if (!sl) return;
   sl.value = TL;
   document.getElementById("tlKind").textContent = { past: T("観測 · その冬", "Observed · winter", "관측 · 그 겨울"), fc: T("予報 · ", "Forecast · ", "예보 · "), fut: T("推定 · 今の傾きのまま", "Estimate · today's trend", "추정 · 지금 기울기 그대로") }[kind];
-  document.getElementById("tmYear").textContent = kind === "past" ? tmYear : kind === "fc" ? T("この先7日", "next 7 days", "앞으로 7일") : PY();
+  renderTlMap(kind);
+  document.getElementById("tmYear").textContent = kind === "past" ? tmYear : kind === "fc" ? T("この先7日", "next 7 days", "앞으로 7일") : `${PY()} (${T(`${TL - 35}年後`, `+${TL - 35} y`, `${TL - 35}년 후`)})`;
   document.getElementById("tm").hidden = kind !== "past"; document.getElementById("tlSat").hidden = kind !== "past";
   document.getElementById("tlFc").hidden = kind !== "fc"; document.getElementById("proj").hidden = kind !== "fut";
   document.querySelectorAll(".tm-ctl .chip").forEach(b => b.classList.toggle("on", +b.dataset.t === TL));
@@ -646,7 +648,7 @@ function renderWorld(p) {
   // entries
   const hs = W.series.heavy, f = senFit(hs, W.winters[0]), ts = W.series.tmean;
   document.getElementById("entries").innerHTML = [["karte", T("雪質カルテ", "Snow chart", "눈 품질 카르테"), T("重い雪の日", "Heavy-snow days", "무거운 눈의 날"), `${fmt(mean(hs.slice(0, 10)), 0)} → ${fmt(mean(hs.slice(-10)), 0)}${T("日", " days", "일")}`, T("1990年代 → 2020年代", "1990s → 2020s", "1990년대 → 2020년대")],
-    ["time", T("雪の年表", "Snow timeline", "눈의 연표"), T("冬の平均気温", "Winter mean temperature", "겨울 평균기온"), `${fmt(mean(ts.slice(0, 10)), 1)} → ${fmt(mean(ts.slice(-10)), 1)}℃`, T("1990年代 → 2020年代 → 2050", "1990s → 2020s → 2050", "1990년대 → 2020년대 → 2050")],
+    ["time", T("雪の年表", "Snow timeline", "눈의 연표"), T("冬の平均気温", "Winter mean temperature", "겨울 평균기온"), `${fmt(mean(ts.slice(0, 10)), 1)} → ${fmt(mean(ts.slice(-10)), 1)}℃`, T("1990年代 → 2020年代 → 10年後", "1990s → 2020s → +10 years", "1990년대 → 2020년대 → 10년 후")],
     ["why", T("なぜ・どこで", "Why & where", "왜·어디서"), T("北海道と世界の研究", "Research: Hokkaido & world", "홋카이도와 세계 연구"), `${fmt(D.cause.explained_share_tp * 100, 0)}%`, T("北海道で気温＋水分が説明する割合", "of Hokkaido's change explained by warming + moisture", "홋카이도 변화 중 기온+수분으로 설명")]]
     .map(([v, t, k, n, sub]) => `<a class="entry" href="#/${v}"><div class="et"><h3>${t}</h3><p class="note">${placeLabel(p)}</p></div><div class="estat"><span class="k mono">${k}</span><b class="mono">${n}</b><span class="note">${sub}</span></div><span class="go mono">→</span></a>`).join("");
   // 2050
@@ -846,10 +848,56 @@ function senFit(ser, x0) {
   const a0 = med(v.map(([x, y]) => y - b * x));
   return { b, lo, hi, at: x => a0 + b * x, xm: med(v.map(p => p[0])), ym: a0 + b * med(v.map(p => p[0])) };
 }
-function renderProj(p, Y = 2050) {
+
+// what a near-future winter means, based on the evidence on the research page (directions, not amounts)
+function meansHTML(Y) {
+  const n = Y - 2026;
+  const L = [
+    ["⬆", "heavy", T("屋根の雪下ろしの重さと回数", "Weight and frequency of roof clearing", "지붕 눈 치우기의 무게와 횟수")],
+    ["⬆", "warn", T("湿った雪・雨のあとに凍る、転倒が多い日", "Days when wet snow or rain freezes — the worst fall days", "젖은 눈·비 뒤에 얼어붙는, 낙상이 많은 날")],
+    ["⬆", "heavy", T("電線・木への着雪、倒木と停電のリスク", "Wet snow on power lines and trees: fallen trees, power cuts", "전선·나무에 붙는 눈, 나무 쓰러짐과 정전 위험")],
+    ["⬇", "light", T("春スキーの日数、4月の雪", "Spring skiing days, April snow", "봄 스키 일수, 4월의 눈")],
+    ["⬇", "light", T("軽い雪（北海道らしいパウダー）の日", "Light-snow (classic Hokkaido powder) days", "가벼운 눈(홋카이도다운 파우더)의 날")],
+  ];
+  return `<div class="means"><p class="lbl mono">${T(`${n}年後の冬に、増えやすいこと・減りやすいこと`, `In ${n} year${n > 1 ? "s" : ""}: more likely / less likely`, `${n}년 후 겨울에 늘기 쉬운 것·줄기 쉬운 것`)}</p>
+    <ul>${L.map(([a, c, t]) => `<li class="${c}"><b>${a}</b> ${t}</li>`).join("")}</ul>
+    <a class="link-in" href="#/why">${T("根拠は「なぜ・どこで」へ →", "Evidence: Why & where →", "근거는 「왜·어디서」로 →")}</a></div>`;
+}
+
+// timeline map: heavy-snow days in each NASA cell — observed for past winters, trend-extended for the future
+let tlMap = null, tlLayer = null;
+function renderTlMap(kind) {
+  const box = document.getElementById("tlMapBox"); if (!box) return;
+  const p = places[0];
+  if (!p || p.out || kind === "fc" || VIEW !== "time") { box.hidden = true; return; }
+  box.hidden = false;
+  if (!tlMap) {
+    tlMap = L.map("tlmap", { scrollWheelZoom: false, zoomControl: true }).setView([43.4, 142.8], 6);
+    L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png", { maxZoom: 12, attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>' }).addTo(tlMap);
+  }
+  setTimeout(() => tlMap.invalidateSize(), 50);
+  if (tlLayer) tlMap.removeLayer(tlLayer);
+  tlLayer = L.layerGroup().addTo(tlMap);
+  const fut = kind === "fut", Y = fut ? PY() : tmYear, i = D.winters.indexOf(Y);
+  const val = c => { const s = c.series.heavy; if (!fut) return s[i]; const f = senFit(s, D.winters[0]); return f ? Math.max(0, f.at(Y)) : null; };
+  const now = c => mean(c.series.heavy.slice(-10));
+  D.cells.forEach(c => {
+    const v = val(c); if (v == null) return;
+    const t = Math.min(1, v / 40);
+    L.rectangle([[c.lat - .25, c.lon - .25], [c.lat + .25, c.lon + .25]], { weight: 0.6, color: "rgba(255,255,255,.35)", fillColor: `rgb(${Math.round(154 + (179 - 154) * t)},${Math.round(215 - 58 * t)},255)`, fillOpacity: 0.15 + 0.7 * t })
+      .bindTooltip(`NASA ${c.lat}°N ${c.lon}°E<br>${T("重い雪の日", "Heavy-snow days", "무거운 눈의 날")}: ${fmt(v, 0)}${T("日", " days", "일")}${fut ? ` (${T("いま", "now", "지금")} ${fmt(now(c), 0)})` : ""}`).addTo(tlLayer);
+    if (fut && v - now(c) >= 2) L.marker([c.lat, c.lon], { icon: L.divIcon({ className: "tlicon", html: "💧", iconSize: [18, 18] }), interactive: false }).addTo(tlLayer);
+  });
+  L.circleMarker([p.la, p.lo], { radius: 8, color: "#7ef0c4", weight: 3, fillOpacity: .2 }).addTo(tlLayer);
+  document.getElementById("tlMapLbl").textContent = fut ? T(`地図 · ${Y}年の重い雪の日（今の傾きのまま）`, `Map · heavy-snow days in ${Y} (trend)`, `지도 · ${Y}년 무거운 눈의 날 (추세)`) : T(`地図 · ${Y}年の冬の重い雪の日（NASA POWER）`, `Map · heavy-snow days, winter ${Y} (NASA POWER)`, `지도 · ${Y}년 겨울 무거운 눈의 날 (NASA POWER)`);
+  document.getElementById("tlMapNote").textContent = fut ? T("色が濃いほど重い雪の日が多い。💧＝いまより2日以上増えるマス。", "Darker = more heavy-snow days. 💧 = cells gaining 2+ days vs now.", "진할수록 무거운 눈의 날이 많음. 💧 = 지금보다 2일 이상 늘어나는 칸.") : T("色が濃いほど重い雪の日が多い（NASAの約50kmマス）。", "Darker = more heavy-snow days (NASA ~50 km cells).", "진할수록 무거운 눈의 날이 많음 (NASA 약 50km 칸).");
+}
+
+function renderProj(p, Y = 2036) {
   const near = p.dist <= 40, src = near ? p.st : p.cell;
   const i01 = D.winters.indexOf(2001);
-  const items = [["heavy", src.series.heavy, D.winters[0], (near ? p.st : p.cell).trend.heavy], ["storm", p.st.series.storm_wet.slice(i01), 2001, p.st.trend.storm_wet]];
+  const items = [["heavy", src.series.heavy, D.winters[0], (near ? p.st : p.cell).trend.heavy], ["storm", p.st.series.storm_wet.slice(i01), 2001, p.st.trend.storm_wet],
+    ["icy", src.series.icy, D.winters[0], src.trend.icy]];
   const html = items.map(([k, ser, x0, tr]) => {
     const f = senFit(ser, x0); if (!f) return "";
     const K = KEYS[k], unit = T(K.unit, K.unit_en, K.unit_ko), cap = k === "spring" ? 100 : Infinity, clip = v => Math.max(0, Math.min(cap, v));
@@ -865,9 +913,10 @@ function renderProj(p, Y = 2050) {
   }).join("");
   document.getElementById("proj").innerHTML = `<h2>${T(`${Y}年、このままの傾きなら。`, `${Y}, if the trend simply continues.`, `${Y}년, 지금 기울기 그대로라면.`)}</h2>
     <div class="proj-grid">${html}</div>
-    <p class="note">${T("35年（JAXAの大雪は26年）の傾き（セン傾き）をそのまま2050年までのばした値です。4月の雪のような割合（％）は0より下がらず直線でのばせないため、ここには入れていません。幅は傾きの95%信頼区間。気候は一直線には変わらないので、<b>予報ではなく「今の傾きの意味」を感じるための目安</b>です。",
-      "The 35-year (JAXA storms: 26-year) Sen's slope simply extended to 2050 (percentages such as April snow cover cannot go below 0, so they are not extended); the range is the slope's 95 % confidence interval. Climate does not change in a straight line, so this is <b>not a forecast</b> — just a way to feel what today's trend means.",
-      "35년(JAXA 폭설은 26년)의 기울기(센 기울기)를 2050년까지 그대로 늘린 값입니다. 4월 눈 같은 비율(%)은 0 아래로 내려갈 수 없어 직선으로 늘릴 수 없으므로 넣지 않았습니다. 범위는 기울기의 95% 신뢰구간입니다. 기후는 일직선으로 바뀌지 않으므로 <b>예보가 아니라 「지금 기울기의 의미」를 느끼기 위한 기준</b>입니다.")}</p>`;
+    ${meansHTML(Y)}
+    <p class="note">${T("35年（衛星は26年）の傾き（セン傾き）を、近い将来（1〜10年）にだけのばした目安です。幅は傾きの95%信頼区間。毎年の天気は大きくゆれるので、<b>「その年の予報」ではなく、平均的な冬がどちらへ動くかの目安</b>です。",
+      "The 35-year (satellite: 26-year) Sen's slope extended only into the near future (1–10 years); the range is the slope's 95 % confidence interval. Single winters vary a lot, so this is <b>not a forecast for that year</b> — it shows where an average winter is heading.",
+      "35년(위성은 26년)의 기울기(센 기울기)를 가까운 미래(1~10년)에만 늘린 기준입니다. 범위는 기울기의 95% 신뢰구간. 해마다 날씨는 크게 흔들리므로 <b>「그 해의 예보」가 아니라 평균적인 겨울이 어느 쪽으로 가는지의 기준</b>입니다.")}</p>`;
 }
 
 
@@ -915,6 +964,37 @@ function renderWhy() {
     datasets: [{ label: T("重い雪の日 / 10年", "Heavy-snow days / decade", "무거운 눈의 날 / 10년"), data: WZ.map(z => z.heavy_slope), backgroundColor: css("--heavy") },
       { label: T("軽い雪の日 / 10年", "Light-snow days / decade", "가벼운 눈의 날 / 10년"), data: WZ.map(z => z.light_slope), backgroundColor: css("--blue") }] },
     options: { animation: false, maintainAspectRatio: false, plugins: { legend: { labels: { boxWidth: 10, font: { size: 11 } } } } } }));
+
+
+  // 4 · other causes
+  const M = C.modes;
+  document.getElementById("why5").innerHTML = `<h2>${T("北極振動やエルニーニョでは、35年の変化を説明できない。", "Arctic Oscillation and El Niño do not explain the 35-year change.", "북극 진동이나 엘니뇨로는 35년의 변화를 설명할 수 없다.")}</h2>
+    <table class="zt"><tr><th>${T("候補", "candidate", "후보")}</th><th>${T("35年の傾き", "35-year trend", "35년 추세")}</th><th>${T("年ごとの説明力", "year-to-year", "해마다 설명력")}</th><th>${T("判定", "verdict", "판정")}</th></tr>
+      <tr><td>${T("冬の気温", "Winter temperature", "겨울 기온")}</td><td><b>+${fmt(C.hok_trend.slope10, 2)}℃/10y</b></td><td rowspan="2">R² ${fmt(M.r2_tp, 2)}</td><td>✅ ${T("主な原因", "main cause", "주요 원인")}</td></tr>
+      <tr><td>${T("冬の降水（水分）", "Winter precipitation", "겨울 강수(수분)")}</td><td><b>${C.stations_precip_up}/10 ↑</b></td><td>✅ ${T("2番目", "second", "두 번째")}</td></tr>
+      <tr><td>${T("北極振動（AO, NOAA）", "Arctic Oscillation (AO, NOAA)", "북극 진동 (AO, NOAA)")}</td><td>${T("なし", "none", "없음")} (p=${fmt(M.ao_trend.p, 2)})</td><td rowspan="2">+${fmt(M.r2_tp_ao_enso - M.r2_tp, 2)}</td><td rowspan="2">⚪ ${T("年ごとのゆれだけ", "only year-to-year noise", "해마다의 흔들림만")}</td></tr>
+      <tr><td>${T("エルニーニョ・ラニーニャ（ONI）", "El Niño / La Niña (ONI)", "엘니뇨·라니냐 (ONI)")}</td><td>${T("なし", "none", "없음")} (p=${fmt(M.oni_trend.p, 2)})</td></tr></table>
+    <p>${T("寒気の入り方（北極振動）や太平洋の水温（エルニーニョ）は、その年の雪を左右しますが、35年の間に一方向へは動いていません。だから長い変化の原因ではありません。残りは、日本海の水温の上昇（水蒸気の供給が増える）、観測場所のまわりの変化、そして偶然のゆれと考えられます。",
+      "Cold-air outbreaks (AO) and Pacific temperatures (ENSO) shape individual winters but have not moved in one direction over 35 years, so they cannot cause the long change. The remainder is likely a warmer Sea of Japan (more water vapour), local changes around stations, and chance.",
+      "한기가 내려오는 방식(북극 진동)과 태평양 수온(엘니뇨)은 그해의 눈을 좌우하지만, 35년 동안 한 방향으로 움직이지 않았습니다. 그래서 긴 변화의 원인은 아닙니다. 나머지는 동해(일본해) 수온 상승(수증기 공급 증가), 관측 장소 주변의 변화, 그리고 우연의 흔들림으로 보입니다.")}</p>
+    <ul class="dots small">
+      <li>${T("日本近海の海面水温は100年あたり +1.36℃（気象庁）。日本海の水温が高い冬は、北海道（岩見沢など）に大雪をもたらすという報告があります。私たちのデータで重い雪がいちばん増えたのも岩見沢（+10日）です。", "Seas around Japan warmed +1.36 °C per century (JMA); warm northern Sea of Japan winters are reported to bring heavy snow to Iwamizawa — the station with our largest rise in heavy-snow days (+10).", "일본 근해 수온은 100년에 +1.36℃ (기상청). 동해 북부 수온이 높은 겨울에는 홋카이도(이와미자와 등)에 큰 눈이 온다는 보고가 있습니다. 우리 데이터에서 무거운 눈이 가장 많이 는 곳도 이와미자와(+10일)입니다.")} <a href="https://ds.data.jma.go.jp/gmd/kaiyou/data/shindan/a_1/japan_warm/japan_warm.html" target="_blank" rel="noopener">JMA</a></li>
+      <li>${T("北極振動・ONI：NOAA気候予測センターの月別指数（冬12〜3月の平均）。長期の傾きを取りのぞいて、気温・降水と一緒に回帰しました。", "AO and ONI: NOAA CPC monthly indices (Dec–Mar mean), regressed with temperature and precipitation after detrending.", "AO·ONI: NOAA 기후예측센터 월별 지수(겨울 12~3월 평균). 장기 추세를 빼고 기온·강수와 함께 회귀.")}</li></ul>`;
+
+  // 5 · consequences
+  const CQ = [
+    ["⬆", T("屋根の雪の重さ・雪下ろし", "Roof snow load and roof clearing", "지붕 눈 무게·눈 치우기"), T("新雪1mの重さ 札幌 55→64 kg/m²（私たちのデータ）。温暖化で重い降雪が増え、積雪の重さが10〜15%増える可能性（北日本の大規模アンサンブル研究）。", "1 m of new snow in Sapporo: 55 → 64 kg/m² (our data). Large-ensemble simulations project 10–15 % heavier snowpack loads in northern Japan.", "새 눈 1m 무게 삿포로 55→64 kg/m² (우리 데이터). 북일본 대규모 앙상블 연구: 적설 하중 10~15% 증가 가능."), "https://openpolar.no/Record/crcambridgeupr:10.1017%2Fjog.2022.85/Description"],
+    ["⬆", T("雪道の転倒", "Falls on icy roads", "눈길 낙상"), T("最悪の日は湿った雪・雨のあとに凍る日。札幌の搬送は2025年の冬に1,813人で最多。重い雪が増えた冬は搬送も増加（r=0.36）。", "The worst days are when wet snow or rain freezes. Sapporo transports hit a record 1,813 (winter 2025); winters with more heavy-snow days had more (r = 0.36).", "최악의 날은 젖은 눈·비 뒤 결빙. 삿포로 이송 2025년 겨울 1,813명 최다. 무거운 눈이 는 겨울엔 이송도 증가 (r=0.36)."), "https://tsurutsuru.jp/toukei3.html"],
+    ["⬆", T("着雪による倒木・停電", "Fallen trees and power cuts from wet snow", "젖은 눈 착설로 나무 쓰러짐·정전"), T("湿った雪は電線や木にくっつきやすい（着雪）。雪による大規模停電の例：2012年11月、暴風雪で送電鉄塔が倒れ、室蘭・登別などで最大約5.6万戸が停電。", "Wet snow sticks to lines and trees. Example of a snow-related blackout: in Nov 2012 a blizzard toppled a transmission tower; up to ~56,000 homes in Muroran and Noboribetsu lost power.", "젖은 눈은 전선·나무에 잘 붙음(착설). 눈으로 인한 대규모 정전 예: 2012년 11월 눈보라로 송전탑이 쓰러져 무로란·노보리베쓰 등 최대 약 5.6만 가구 정전."), "https://www.meti.go.jp/shingikai/sankoshin/hoan_shohi/denryoku_anzen/pdf/004_10_00.pdf"],
+    ["⬆", T("湿雪の雪崩", "Wet-snow avalanches", "젖은 눈 눈사태"), T("冬の気温上昇と融雪の前倒しで、寒い北海道でも湿雪雪崩が増える懸念（土木研究所）。", "Warmer winters and earlier melt raise concern about more wet-snow avalanches even in cold Hokkaido (PWRI).", "겨울 기온 상승과 이른 융설로 추운 홋카이도에서도 젖은 눈 눈사태 증가 우려 (토목연구소)."), "https://www.hkd.mlit.go.jp/ky/jg/gijyutu/slo5pa000001a6ux-att/slo5pa000001a78f.pdf"],
+    ["⬆", T("除雪中の事故", "Accidents while clearing snow", "제설 중 사고"), T("2026年1月、道内で雪関連の事故17件・5人死亡（道警）。重い雪ほど体への負担が大きく、高齢者に多い。", "Jan 2026: 17 snow-related accidents and 5 deaths in Hokkaido (police). Heavier snow strains the body more; older residents are most at risk.", "2026년 1월 도내 눈 관련 사고 17건·5명 사망 (도경). 무거운 눈일수록 몸에 부담, 고령자에 많음."), "https://www.hokkaido-np.co.jp/article/1268358/"],
+    ["⬇", T("積雪期間・春スキー", "Snow season and spring skiing", "적설 기간·봄 스키"), T("4月の雪は10年で−13ポイント（NASA MODIS）。2℃の温暖化で北海道の積雪期間は約1か月短くなる予測（勝山ら）。", "April snow cover −13 points per decade (NASA MODIS); 2 °C of warming is projected to shorten Hokkaido's snow season by about a month (Katsuyama et al.).", "4월 눈 10년에 −13%p (NASA MODIS). 2℃ 온난화로 홋카이도 적설 기간 약 1개월 단축 예측 (가쓰야마 등)."), "https://eprints.lib.hokudai.ac.jp/dspace/bitstream/2115/80641/1/Yuta_KATSUYAMA.pdf"],
+    ["⬇", T("北海道らしい軽い雪", "Hokkaido's signature light snow", "홋카이도다운 가벼운 눈"), T("北大と気象研究所は、温暖化で北海道の雪が本州のような重く湿った雪に近づくと予測。私たちのデータでは、軽い雪の日は減る傾向（まだ確かではない）。", "Hokkaido University and the Meteorological Research Institute project Hokkaido's snow becoming wetter like Honshu's; in our data light-snow days lean down (not yet certain).", "홋카이도대·기상연구소: 온난화로 홋카이도 눈이 혼슈처럼 무겁고 젖은 눈에 가까워질 것으로 예측. 우리 데이터에선 가벼운 눈의 날 감소 경향 (아직 확실치 않음)."), "https://newswitch.jp/p/42445"],
+    ["↕", T("雪どけ水の時期", "Timing of meltwater", "눈 녹은 물의 시기"), T("雪どけが早まると、川の増水や農業用水・水道の水が使える時期がずれる。", "An earlier melt shifts spring river peaks and when water is available for farms and towns.", "눈이 일찍 녹으면 하천이 불어나는 시기와 농업·생활용수를 쓸 수 있는 시기가 바뀜."), ""],
+  ];
+  document.getElementById("why6").innerHTML = `<h2>${T("重い雪の冬で、何が増え、何が減るか。", "In wetter, heavier winters: what rises, what falls.", "무거운 눈의 겨울에 무엇이 늘고 무엇이 줄까.")}</h2>
+    <div class="cq">${CQ.map(([a, t, d, u]) => `<div class="cqi ${a === "⬆" ? "up" : a === "⬇" ? "dn" : ""}"><b class="cqa">${a}</b><div><h4>${t}</h4><p>${d}${u ? ` <a href="${u}" target="_blank" rel="noopener">${T("出典", "source", "출처")}</a>` : ""}</p></div></div>`).join("")}</div>
+    <p class="note">${T("⬆⬇は「増えやすい・減りやすい」向きです。私たちのデータで確かめたもの（重さ、転倒との関係、4月の雪）と、研究や報道で示されているもの（停電、雪崩、事故）を区別して出典をつけています。", "⬆⬇ show the likely direction. We separate what our data show (weight, link with falls, April snow) from what studies and reports show (power cuts, avalanches, accidents), each with a source.", "⬆⬇는 「늘기 쉬움·줄기 쉬움」 방향입니다. 우리 데이터로 확인한 것(무게, 낙상과의 관계, 4월 눈)과 연구·보도가 보여 주는 것(정전, 눈사태, 사고)을 구분해 출처를 붙였습니다.")}</p>`;
 
   // limits
   const F = D.field, H = D.sensitivity.heavy;

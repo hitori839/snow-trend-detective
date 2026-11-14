@@ -48,7 +48,7 @@
     <ul class="hud-modes">
       <li class="on"><div><span class="ico">✕</span><span class="k" data-ja="いまの場所" data-en="Current place" data-ko="지금 장소"></span><b id="hudPlace">—</b></div></li>
       <li><a href="#/karte"><span class="ico">▦</span><span class="k">Snow chart</span><b data-ja="雪質カルテ" data-en="Snow-quality chart" data-ko="눈 품질 카르테"></b></a></li>
-      <li><a href="#/time"><span class="ico">⟲</span><span class="k">1992 → 2050</span><b data-ja="雪の年表" data-en="Snow timeline" data-ko="눈의 연표"></b></a></li>
+      <li><a href="#/time"><span class="ico">⟲</span><span class="k">1992 → +10y</span><b data-ja="雪の年表" data-en="Snow timeline" data-ko="눈의 연표"></b></a></li>
       <li><a href="#/why"><span class="ico">◎</span><span class="k">Research</span><b data-ja="なぜ・どこで" data-en="Why & where" data-ko="왜·어디서"></b></a></li>
     </ul>
     <div class="hud-r">
@@ -215,17 +215,22 @@
     <div class="view" data-view="time" hidden>
       <div class="pbar"></div>
       <section>
-        <p class="lbl mono" data-ja="雪の年表 · 1992 → 明日 → 2050" data-en="Snow timeline · 1992 → tomorrow → 2050" data-ko="눈의 연표 · 1992 → 내일 → 2050"></p>
+        <p class="lbl mono" data-ja="雪の年表 · 1992 → 明日 → 10年後" data-en="Snow timeline · 1992 → tomorrow → +10 years" data-ko="눈의 연표 · 1992 → 내일 → 10년 후"></p>
         <div class="box tm">
           <div class="tm-ctl">
             <div class="tm-head"><span id="tlKind"></span> <b id="tmYear"></b></div>
-            <input type="range" id="tmSlider" min="0" max="40" step="1">
-            <div class="tl-axis mono"><span>1992</span><span data-ja="観測" data-en="observed" data-ko="관측"></span><span>2026</span><span data-ja="明日" data-en="tomorrow" data-ko="내일"></span><span data-ja="今の傾き" data-en="trend" data-ko="추세"></span><span>2050</span></div>
-            <div class="chips"><button class="chip" data-t="14">2006</button><button class="chip" data-t="32" data-ja="2024（旅行した冬）" data-en="2024 (my trip)" data-ko="2024 (여행한 겨울)"></button><button class="chip" data-t="34" data-ja="2026（今年）" data-en="2026 (latest)" data-ko="2026 (최신)"></button><button class="chip" data-t="35" data-ja="明日〜7日" data-en="Next 7 days" data-ko="내일~7일"></button><button class="chip" data-t="38">2040</button><button class="chip" data-t="40">2050</button></div>
+            <input type="range" id="tmSlider" min="0" max="45" step="1">
+            <div class="tl-axis mono"><span>1992</span><span data-ja="観測" data-en="observed" data-ko="관측"></span><span>2026</span><span data-ja="明日" data-en="tomorrow" data-ko="내일"></span><span data-ja="今の傾き" data-en="trend" data-ko="추세"></span><span data-ja="10年後" data-en="+10 y" data-ko="10년 후"></span></div>
+            <div class="chips"><button class="chip" data-t="14">2006</button><button class="chip" data-t="32" data-ja="2024（旅行した冬）" data-en="2024 (my trip)" data-ko="2024 (여행한 겨울)"></button><button class="chip" data-t="34" data-ja="2026（今年）" data-en="2026 (latest)" data-ko="2026 (최신)"></button><button class="chip" data-t="35" data-ja="明日〜7日" data-en="Next 7 days" data-ko="내일~7일"></button><button class="chip" data-t="36" data-ja="1年後" data-en="+1 year" data-ko="1년 후"></button><button class="chip" data-t="40" data-ja="5年後" data-en="+5 years" data-ko="5년 후"></button><button class="chip" data-t="45" data-ja="10年後" data-en="+10 years" data-ko="10년 후"></button></div>
           </div>
           <div class="tm-body" id="tm"></div>
           <div id="tlFc"></div>
           <div id="proj"></div>
+          <div class="tlmapbox" id="tlMapBox">
+            <p class="lbl mono" id="tlMapLbl"></p>
+            <div id="tlmap" aria-label="Map of heavy-snow days"></div>
+            <p class="note" id="tlMapNote"></p>
+          </div>
           <div class="sat" id="tlSat">
             <p class="lbl mono" data-ja="その冬の衛星写真 · NASA MODIS 月平均の雪" data-en="That winter from space · NASA MODIS monthly snow" data-ko="그 겨울의 위성 사진 · NASA MODIS 월평균 눈"></p>
             <div class="row chips" id="satChips"><button class="chip" data-m="02" data-ja="2月（真冬）" data-en="February (midwinter)" data-ko="2월 (한겨울)"></button><button class="chip on" data-m="04" data-ja="4月（雪どけ）" data-en="April (melt)" data-ko="4월 (눈 녹을 때)"></button></div>
@@ -250,7 +255,15 @@
         <div class="box" id="why3"></div>
       </section>
       <section>
-        <p class="lbl mono" data-ja="4 · どこまで確かか" data-en="4 · How sure, and what we cannot say" data-ko="4 · 어디까지 확실한가"></p>
+        <p class="lbl mono" data-ja="4 · ほかの原因は？" data-en="4 · Any other causes?" data-ko="4 · 다른 원인은?"></p>
+        <div class="box" id="why5"></div>
+      </section>
+      <section>
+        <p class="lbl mono" data-ja="5 · これから増えること・減ること" data-en="5 · What becomes more common, and less" data-ko="5 · 앞으로 늘어나는 것·줄어드는 것"></p>
+        <div class="box" id="why6"></div>
+      </section>
+      <section>
+        <p class="lbl mono" data-ja="6 · どこまで確かか" data-en="6 · How sure, and what we cannot say" data-ko="6 · 어디까지 확실한가"></p>
         <div class="box" id="why4"></div>
       </section>
     </div>
