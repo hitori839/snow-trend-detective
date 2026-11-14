@@ -47,7 +47,7 @@
     <div class="c"><span class="tag n">NASA</span><b>NASA MODIS 月平均の雪（GIBS）</b><p>地図タイルの色を公式カラーマップで％に戻す<br><span class="to">→ 4月・12月の雪のおおわれ方</span></p></div>
     <div class="c v"><span class="tag j">JAXA</span><b>JAXA GSMaP 衛星降水（日別・月別）</b><p>JAXA Earth API（jaxa-earth）<br><span class="to">→ 重い大雪の日・水1mmで積もる雪（雪の重さ）</span></p></div>
     <div class="c"><b>気象庁 過去の気象データ 10観測所</b><p>降雪・最深積雪・気温・風速の日別値<br><span class="to">→ 地上での確かめ・積雪の深さ</span></p></div>
-    <div class="c"><b>札幌市消防局 転倒搬送／国の報告書</b><p>「日本の気候変動2025」（文科省・気象庁）<br><span class="to">→ 影響と答え合わせ</span></p></div>
+    <div class="c"><b>札幌市消防局 転倒搬送／NOAA指数／国の報告書</b><p>北極振動・ONI（NOAA）、「日本の気候変動2025」（文科省・気象庁）<br><span class="to">→ 影響と答え合わせ</span></p></div>
   </div>
   <div class="arrow">➜</div>
 
@@ -57,7 +57,7 @@
     <div class="c"><div class="mono">fetch_*.py</div><p>POWER・気象庁・JAXA（日別は実際の撮影日で対応）・MODIS・世界格子を取得</p></div>
     <div class="c"><div class="mono">analyze.py ─ 冬ごとの指標</div><p>雪の日のうち 平均 −5℃以下＝軽い雪、−2℃より暖かい＝重い雪／最高0℃超・最低0℃未満＝つるつる／降雪÷降水＝雪の重さ</p></div>
     <div class="c"><div class="mono">確かめ（Validity）</div><p>マン・ケンドール＋セン傾き／多重比較の補正（FDR）／冬の順番を500回シャッフル／基準を −3〜0℃ に変えても同じか</p></div>
-    <div class="c"><div class="mono">原因と場所</div><p>気温・降水で回帰 → 説明できる割合／冬の平均気温ごとの変化（北海道・世界）</p>
+    <div class="c"><div class="mono">原因と場所</div><p>気温・降水で回帰 → 説明できる割合／北極振動・エルニーニョ（NOAA）は35年の傾きなし／冬の平均気温ごとの変化（北海道・世界）</p>
       <div class="stat"><div><b>10/10</b><span>重い雪↑</span></div><div><b>9/10</b><span>雪が重く</span></div><div><b>66%</b><span>気温+水分</span></div></div></div>
     <div class="c"><div class="mono">docs/ data.json · world.json · data/*.csv</div><p>アプリが読む結果と、市・研究者向けの公開データ</p></div>
   </div>
@@ -69,15 +69,15 @@
     <div class="c"><b>ホーム：3D地球儀（NASA Blue Marble）＋HUD</b><p>どこでもクリック・現在地・世界中の地名検索（日英韓） → その場所の答えと根拠</p></div>
     <div class="c"><b>世界モード</b><p>北海道の外は NASA POWER をブラウザで直接取得し、同じ決まり・同じ検定で35冬を計算</p></div>
     <div class="c"><b>雪質カルテ</b><p>北海道全体の判定 → この街の数字 → 「だから」何をするか（屋根の雪の重さ 55→64 kg/m² など）</p></div>
-    <div class="c"><b>雪の年表</b><p>1992（観測）→ この先7日（予報・⚠️転倒注意）→ 2050（今の傾きの推定、予報ではない）</p></div>
-    <div class="c"><b>なぜ・どこで ／ 公開データ</b><p>原因の分解、次に変わりやすい場所、世界178地点 ／ CSV・JSONダウンロード</p></div>
+    <div class="c"><b>雪の年表</b><p>1992（観測）→ この先7日（予報・⚠️転倒注意）→ 1〜10年後（今の傾きの推定）＋地図、ここで増える・減ること</p></div>
+    <div class="c"><b>なぜ・どこで ／ 公開データ</b><p>原因の分解、ほかの原因の確認、これから増える・減ること（転倒・着雪・雪崩・春スキー…出典つき）／CSV・JSON</p></div>
   </div>
 </div>
 
 <div class="bottom">
   <div class="c"><div class="k">実装済み</div><div class="ok">✔ 35冬の解析と検定　✔ 雪の重さの直接測定　✔ 原因の分解（66%）　✔ 世界モード<br>✔ 7日の雪質予報　✔ 雪の年表　✔ 市向けデータ　✔ 3言語・スマホ・インストール　✔ 英語スライド7枚</div></div>
   <div class="c"><div class="k">これから（11/15 提出まで）</div><p style="font-size:14px">メイン画面の改善（選んだ場所の雪の様子を地球儀の上で見せる）／発表の練習／提出ページの仕上げ</p></div>
-  <div class="c"><div class="k">位置づけ</div><p style="font-size:14px">「確か」は独立したデータがそろったときだけ。2050年の値は予報ではなく、今の傾きをのばした目安です。</p></div>
+  <div class="c"><div class="k">位置づけ</div><p style="font-size:14px">「確か」は独立したデータがそろったときだけ。雪の量はほぼ同じ、変わったのは質。未来は1〜10年だけ、今の傾きの目安です。</p></div>
 </div>
 <div class="legend">データ：NASA POWER · NASA MODIS (GIBS) · NASA Blue Marble · JAXA GSMaP · 気象庁 · 札幌市消防局 · Open-Meteo　｜　コードの多くはAI（Claude）の支援で作成</div>
 </body>

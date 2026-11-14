@@ -14,8 +14,8 @@ NASA Space Apps Challenge 2026 · **Be An Earth System Trend Detective** · Team
 - **In a nutshell:** one sentence plus the five changes confirmed across Hokkaido, with your town's numbers.
 - **7-day snow-quality forecast:** the forecast read with the same rules; ⚠️ marks rain or wet snow followed by a freeze — the conditions of Sapporo's worst fall-injury days.
 - **Snow-quality chart:** one card per change — Hokkaido-wide verdict first, this town second, then a "So what" action (roof clearing, grit, community snow help, spring season planning). Includes the roof load of 1 m of new snow.
-- **Snow timeline:** one slider from 1992 (observed: deepest snow drawn against a 170 cm person, coldest morning's wind chill, NASA MODIS snow map of that winter) to the next 7 days (forecast) to 2030–2050 (today's trend extended, with its 95 % range; clearly *not* a forecast).
-- **Why & where (research):** cause decomposition, where in Hokkaido snow changes most, the same test on 178 snowy land points worldwide, and what we still cannot say.
+- **Snow timeline:** one slider from 1992 (observed: deepest snow drawn against a 170 cm person, coldest morning's wind chill, NASA MODIS snow map of that winter) to the next 7 days (forecast) to 1–10 years ahead (today's trend extended, with its 95 % range and a map; clearly *not* a forecast), plus what becomes more or less likely in that place.
+- **Why & where (research):** cause decomposition, other candidate causes (AO, ENSO), where snow changes most, the same test on 178 snowy land points worldwide, what becomes more or less common (with sources), and what we still cannot say.
 - **Why it matters:** Sapporo fall-injury ambulance transports (record 1,813 in winter 2025) next to heavy-snow days.
 - **Open data:** per-cell and per-station results as CSV/JSON for city snow planning and research.
 
@@ -29,6 +29,9 @@ NASA Space Apps Challenge 2026 · **Be An Earth System Trend Detective** · Team
 | Spring snow leaves earlier | NASA MODIS April snow cover −13.1 points/decade (p = 0.003); 42/42 cells down, 30 significant |
 | Why | Winters warmed +0.3 °C/decade (43/43 cells up, 10/10 stations significant). Warming alone explains ≈ 46 % of the heavy-snow rise; adding winter precipitation (up at 10/10 stations) ≈ 66 % |
 | Where | Cells already warmer than −3 °C changed most (+1.9 days/decade); the cold interior below −7 °C barely changed → towns now at −5 to −3 °C are likely next. Worldwide, heavy snow rises where winters average −10 to −2 °C — Hokkaido (≈ −4 °C) sits in that band |
+| Quantity vs quality | The amount of snow barely changed (snow days: no clear trend; deepest snow mostly unchanged) — its quality did |
+| Other causes | Arctic Oscillation and El Niño (NOAA CPC indices) have no 35-year trend (p = 0.78, 1.0) and add R² +0.02 year to year; a warmer Sea of Japan (+1.36 °C/century, JMA) is the likely remainder |
+| What follows | More roof load, falls on icy roads, wet snow on lines and trees, wet-snow avalanches and snow-clearing accidents; shorter snow season and less light snow (our data + cited studies) |
 | Not yet certain | Light-snow (powder) days lean down but chance level 6 % > 5 %; ⚠️ forecast not validated (no daily accident data) |
 | Robustness | Heavy-snow cut-off moved to −3/−2/−1/0 °C: same conclusion; Benjamini–Hochberg FDR; directions match *Climate Change in Japan 2025* (MEXT & JMA), Chapter 6 |
 
@@ -39,6 +42,7 @@ NASA Space Apps Challenge 2026 · **Be An Earth System Trend Detective** · Team
 - **JAXA GSMaP** gauge-adjusted v6, monthly and daily, via JAXA Earth API (`jaxa-earth`). https://data.earth.jaxa.jp/
 - **Japan Meteorological Agency** historical daily data, 10 Hokkaido stations. https://www.data.jma.go.jp/stats/etrn/
 - **Sapporo City Fire Bureau** fall-injury statistics (via Winter Life Promotion Council, https://tsurutsuru.jp/toukei1.html) — `data/sapporo_falls.csv`
+- **NOAA CPC** Arctic Oscillation and ONI indices (`data/indices/`); JMA sea-surface temperature trends.
 - **Open-Meteo** forecast API; place search: Wikidata, Photon (OpenStreetMap), GSI address search; place names: BigDataCloud; map tiles: GSI.
 - Literature: MEXT & JMA *Climate Change in Japan 2025*, Ch. 6; Helfricht et al. (2018) HESS; Hedstrom & Pomeroy (1998).
 
