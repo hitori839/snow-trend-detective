@@ -2,6 +2,8 @@
 
 NASA Space Apps Challenge 2026 · **Be An Earth System Trend Detective** · Team **Snow Trend Detective** (Kim Dohyun, solo, Sapporo local event, online from Korea)
 
+🏅 **NASA Space Apps Challenge 2026 — Sapporo local event: Special Award**
+
 **Question:** Is Hokkaido's light, dry snow turning into heavy, wet snow?
 **Answer:** Yes. Hokkaido's snow is getting wetter and heavier, and leaving earlier in spring — and about two thirds of the rise in heavy-snow days is explained by warmer, wetter winters.
 
