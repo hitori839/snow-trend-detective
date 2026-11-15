@@ -21,7 +21,7 @@ b{font-weight:700}
 /* ---------- top bar ---------- */
 .top{position:sticky;top:0;z-index:1000;display:flex;align-items:center;gap:22px;padding:12px 28px;background:rgba(11,22,40,.72);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:600 14px var(--sans);letter-spacing:-.01em;margin-right:auto}
-.brand .logo{width:24px;height:24px;border-radius:50%;background:#fff}
+.brand .logo{width:28px;height:28px;border-radius:50%}
 .navlinks{display:flex;gap:22px;font-size:12px;color:var(--muted)}
 .navlinks a{text-decoration:none;padding:4px 0;border-bottom:1px solid transparent;white-space:nowrap}
 .navlinks a:hover{color:var(--ink)}
