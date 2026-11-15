@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Snow Trend Detective team logo">
+  <!-- Team banner logo — AI-assisted design (Claude) -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1630"/><stop offset=".55" stop-color="#143061"/><stop offset="1" stop-color="#2b4f8a"/>
+    </linearGradient>
+    <linearGradient id="aurA" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7ef0c4" stop-opacity="0"/><stop offset=".3" stop-color="#7ef0c4" stop-opacity=".95"/>
+      <stop offset=".65" stop-color="#5fe3ff" stop-opacity=".8"/><stop offset="1" stop-color="#b39dff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="aurB" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#b39dff" stop-opacity="0"/><stop offset=".45" stop-color="#d59bff" stop-opacity=".8"/><stop offset="1" stop-color="#ff8fc8" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="crys" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#d4f2ff"/><stop offset=".65" stop-color="#bdb4ff"/><stop offset="1" stop-color="#9b7cff"/>
+    </linearGradient>
+    <linearGradient id="mtn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4f9ff"/><stop offset=".4" stop-color="#a9c2e4"/><stop offset="1" stop-color="#3a5a8c"/>
+    </linearGradient>
+    <linearGradient id="txt" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#c9f6e6"/><stop offset="1" stop-color="#7ef0c4"/>
+    </linearGradient>
+    <linearGradient id="txt2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d8ccff"/><stop offset="1" stop-color="#b39dff"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#d7f3ff" stop-opacity=".95"/><stop offset=".35" stop-color="#9ad7ff" stop-opacity=".45"/><stop offset="1" stop-color="#9ad7ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="shadow" x="-10%" y="-20%" width="120%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#04101f" flood-opacity=".75"/></filter>
+    <g id="arm">
+      <path d="M0 -30 L11 -44 L11 -130 L0 -190 L-11 -130 L-11 -44 Z" fill="url(#crys)"/>
+      <path d="M0 -165 L0 -44" stroke="#fff" stroke-opacity=".85" stroke-width="3"/>
+      <path d="M9 -92 L48 -128 L57 -117 L15 -79 Z" fill="url(#crys)"/>
+      <path d="M-9 -92 L-48 -128 L-57 -117 L-15 -79 Z" fill="url(#crys)"/>
+      <path d="M9 -138 L33 -162 L40 -153 L13 -127 Z" fill="url(#crys)"/>
+      <path d="M-9 -138 L-33 -162 L-40 -153 L-13 -127 Z" fill="url(#crys)"/>
+      <circle cx="0" cy="-196" r="6" fill="#fff"/>
+    </g>
+  </defs>
+
+  <rect width="1200" height="800" fill="url(#sky)"/>
+  <!-- stars -->
+  <g fill="#fff">
+    <circle cx="80" cy="70" r="2.5"/><circle cx="210" cy="140" r="1.8"/><circle cx="520" cy="60" r="2"/><circle cx="700" cy="120" r="1.6"/>
+    <circle cx="860" cy="50" r="2.4"/><circle cx="1010" cy="110" r="1.8"/><circle cx="1140" cy="60" r="2.2"/><circle cx="620" cy="220" r="1.4"/>
+    <circle cx="960" cy="230" r="1.5"/><circle cx="1120" cy="250" r="1.8"/><circle cx="40" cy="300" r="1.6"/>
+  </g>
+  <path d="M1080 150 l5 14 14 5 -14 5 -5 14 -5 -14 -14 -5 14 -5 Z" fill="#fff"/>
+  <path d="M600 40 l3 9 9 3 -9 3 -3 9 -3 -9 -9 -3 9 -3 Z" fill="#fff" opacity=".9"/>
+  <!-- aurora -->
+  <path d="M-50 260 C200 120 420 230 640 120 S1000 40 1260 120" fill="none" stroke="url(#aurA)" stroke-width="90" stroke-linecap="round" opacity=".75" filter="url(#blur)"/>
+  <path d="M-50 330 C240 220 470 300 700 210 S1040 160 1260 220" fill="none" stroke="url(#aurB)" stroke-width="60" stroke-linecap="round" opacity=".6" filter="url(#blur)"/>
+  <!-- mountains -->
+  <path d="M0 800 L0 600 L120 520 L210 580 L330 470 L450 560 L560 500 L700 590 L820 510 L960 590 L1080 520 L1200 570 L1200 800 Z" fill="url(#mtn)"/>
+  <path d="M120 520 L150 545 L132 546 L120 536 L106 547 Z M330 470 L372 508 L346 506 L330 492 L312 507 Z M560 500 L594 530 L574 528 L560 516 L545 528 Z M820 510 L854 540 L834 538 L820 526 L805 538 Z M1080 520 L1110 546 L1092 545 L1080 534 L1066 545 Z" fill="#fff"/>
+  <path d="M0 800 L0 690 C220 650 460 700 700 670 S1050 640 1200 670 L1200 800 Z" fill="#0b1628" opacity=".72"/>
+  <!-- trend line on the snow -->
+  <polyline points="60,742 210,728 330,736 470,708 610,714 760,684 900,690 1040,654 1140,642" fill="none" stroke="#b39dff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="1140" cy="642" r="11" fill="#b39dff" stroke="#fff" stroke-width="3"/>
+
+  <!-- crystal (left) -->
+  <circle cx="260" cy="330" r="230" fill="url(#glow)"/>
+  <g transform="translate(260 330) scale(0.95)">
+    <use href="#arm"/><use href="#arm" transform="rotate(60)"/><use href="#arm" transform="rotate(120)"/>
+    <use href="#arm" transform="rotate(180)"/><use href="#arm" transform="rotate(240)"/><use href="#arm" transform="rotate(300)"/>
+    <path d="M0 -40 L35 -20 L35 20 L0 40 L-35 20 L-35 -20 Z" fill="url(#crys)" stroke="#fff" stroke-width="3"/>
+    <path d="M0 -40 L35 -20 L0 0 Z" fill="#fff" opacity=".9"/>
+    <path d="M0 0 L35 20 L0 40 Z" fill="#7b5cff" opacity=".4"/>
+    <path d="M0 212 C-13 230 -15 240 -15 246 A15 15 0 0 0 15 246 C15 240 13 230 0 212 Z" fill="#a98bff" stroke="#fff" stroke-width="2.5"/>
+  </g>
+
+  <!-- title (right) -->
+  <g filter="url(#shadow)" font-family="'Inter Tight','Arial Black','Segoe UI',sans-serif" font-weight="900">
+    <text x="520" y="300" font-size="132" fill="url(#txt)" letter-spacing="-3">Snow</text>
+    <text x="520" y="425" font-size="132" fill="url(#txt)" letter-spacing="-3">Trend</text>
+    <text x="520" y="550" font-size="118" fill="url(#txt2)" letter-spacing="-3">Detective</text>
+  </g>
+  <text x="526" y="605" font-family="'Noto Sans JP','Yu Gothic','Meiryo',sans-serif" font-weight="800" font-size="40" fill="#eaf2ff" filter="url(#shadow)">わが街の雪質カルテ</text>
+</svg>
