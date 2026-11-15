@@ -1,56 +1,83 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Snow Trend Detective logo">
-  <!-- Snow Trend Detective — a snowflake under a magnifying glass; upper arms light snow (ice blue), lower arms heavy snow (violet). AI-assisted design (Claude). -->
+  <!-- Snow Trend Detective — a glowing snow crystal over an aurora sky and snowy peaks.
+       Upper half ice-white (light snow) turns violet below (heavy snow). AI-assisted design (Claude). -->
   <defs>
-    <radialGradient id="bg" cx="38%" cy="30%" r="80%">
-      <stop offset="0" stop-color="#1c3354"/><stop offset=".6" stop-color="#0f1d33"/><stop offset="1" stop-color="#0a1424"/>
+    <radialGradient id="sky" cx="50%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#22406b"/><stop offset=".55" stop-color="#122542"/><stop offset="1" stop-color="#070f1d"/>
     </radialGradient>
-    <linearGradient id="aur" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#7ef0c4" stop-opacity="0"/><stop offset=".35" stop-color="#7ef0c4" stop-opacity=".55"/>
-      <stop offset=".7" stop-color="#b39dff" stop-opacity=".5"/><stop offset="1" stop-color="#b39dff" stop-opacity="0"/>
+    <linearGradient id="aur1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7ef0c4" stop-opacity="0"/><stop offset=".35" stop-color="#7ef0c4" stop-opacity=".85"/>
+      <stop offset=".7" stop-color="#7fd3ff" stop-opacity=".6"/><stop offset="1" stop-color="#b39dff" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#9af5d2"/><stop offset="1" stop-color="#7ef0c4"/>
+    <linearGradient id="aur2" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b39dff" stop-opacity="0"/><stop offset=".4" stop-color="#d6a8ff" stop-opacity=".7"/>
+      <stop offset=".8" stop-color="#ff9ecb" stop-opacity=".35"/><stop offset="1" stop-color="#ff9ecb" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="arm" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#eaf6ff"/><stop offset=".45" stop-color="#9ad7ff"/><stop offset="1" stop-color="#b39dff"/>
+    <linearGradient id="crys" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".38" stop-color="#cfefff"/><stop offset=".62" stop-color="#b9b2ff"/><stop offset="1" stop-color="#9b7cff"/>
     </linearGradient>
-    <clipPath id="lens"><circle cx="222" cy="214" r="128"/></clipPath>
+    <linearGradient id="facet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".95"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="mtn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eaf4ff"/><stop offset=".35" stop-color="#9fb7d8"/><stop offset="1" stop-color="#34507a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#bfe9ff" stop-opacity=".75"/><stop offset=".5" stop-color="#9ad7ff" stop-opacity=".22"/><stop offset="1" stop-color="#9ad7ff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"/></filter>
+    <clipPath id="disk"><circle cx="256" cy="256" r="244"/></clipPath>
+    <!-- one arm of the crystal, pointing up; drawn 6 times -->
+    <g id="arm">
+      <path d="M0 -28 L10 -40 L10 -120 L0 -176 L-10 -120 L-10 -40 Z" fill="url(#crys)"/>
+      <path d="M0 -150 L0 -40" stroke="#ffffff" stroke-opacity=".8" stroke-width="3"/>
+      <path d="M8 -86 L44 -118 L52 -108 L14 -74 Z" fill="url(#crys)"/>
+      <path d="M-8 -86 L-44 -118 L-52 -108 L-14 -74 Z" fill="url(#crys)"/>
+      <path d="M8 -128 L30 -150 L36 -142 L12 -118 Z" fill="url(#crys)"/>
+      <path d="M-8 -128 L-30 -150 L-36 -142 L-12 -118 Z" fill="url(#crys)"/>
+      <path d="M0 -176 L10 -120 L0 -128 Z" fill="url(#facet)"/>
+      <circle cx="0" cy="-182" r="5" fill="#ffffff"/>
+    </g>
   </defs>
-  <circle cx="256" cy="256" r="248" fill="url(#bg)"/>
-  <circle cx="256" cy="256" r="246" fill="none" stroke="#7ef0c4" stroke-opacity=".25" stroke-width="3"/>
-  <!-- aurora band -->
-  <path d="M40 170 C150 90 330 70 470 140" fill="none" stroke="url(#aur)" stroke-width="26" stroke-linecap="round" opacity=".75"/>
-  <path d="M60 200 C170 130 320 120 455 175" fill="none" stroke="url(#aur)" stroke-width="10" stroke-linecap="round" opacity=".5"/>
-  <!-- lens glass -->
-  <circle cx="222" cy="214" r="128" fill="#0b1628" fill-opacity=".55"/>
-  <g clip-path="url(#lens)" opacity=".18"><path d="M94 300 C150 250 230 250 350 210" stroke="#eaf2ff" stroke-width="2" fill="none"/></g>
-  <!-- snowflake -->
-  <g transform="translate(222 214)" stroke-linecap="round" fill="none">
-    <!-- light arms (top half): thin, ice blue -->
-    <g stroke="#dff2ff" stroke-width="9">
-      <line x1="0" y1="0" x2="0" y2="-92"/><line x1="0" y1="-52" x2="-22" y2="-72"/><line x1="0" y1="-52" x2="22" y2="-72"/>
-      <g transform="rotate(-60)"><line x1="0" y1="0" x2="0" y2="-92"/><line x1="0" y1="-52" x2="-22" y2="-72"/><line x1="0" y1="-52" x2="22" y2="-72"/></g>
-      <g transform="rotate(60)"><line x1="0" y1="0" x2="0" y2="-92"/><line x1="0" y1="-52" x2="-22" y2="-72"/><line x1="0" y1="-52" x2="22" y2="-72"/></g>
+
+  <g clip-path="url(#disk)">
+    <rect width="512" height="512" fill="url(#sky)"/>
+    <!-- stars -->
+    <g fill="#ffffff">
+      <circle cx="96" cy="120" r="2.4"/><circle cx="410" cy="96" r="2"/><circle cx="440" cy="190" r="1.6"/><circle cx="70" cy="230" r="1.6"/>
+      <circle cx="150" cy="70" r="1.4"/><circle cx="360" cy="56" r="1.6"/><circle cx="460" cy="260" r="1.4"/><circle cx="52" cy="170" r="1.2"/>
     </g>
-    <!-- heavy arms (bottom half): thick, violet, ending in water drops -->
-    <g stroke="#b39dff" stroke-width="15">
-      <line x1="0" y1="0" x2="0" y2="74"/>
-      <g transform="rotate(120)"><line x1="0" y1="0" x2="0" y2="-74"/></g>
-      <g transform="rotate(-120)"><line x1="0" y1="0" x2="0" y2="-74"/></g>
-    </g>
-    <g fill="#b39dff" stroke="none">
-      <path d="M0 76 C-11 92 -13 100 -13 106 A13 13 0 0 0 13 106 C13 100 11 92 0 76 Z"/>
-      <g transform="rotate(120)"><path d="M0 -76 C-11 -92 -13 -100 -13 -106 A13 13 0 0 1 13 -106 C13 -100 11 -92 0 -76 Z"/></g>
-      <g transform="rotate(-120)"><path d="M0 -76 C-11 -92 -13 -100 -13 -106 A13 13 0 0 1 13 -106 C13 -100 11 -92 0 -76 Z"/></g>
-    </g>
-    <circle r="14" fill="#eaf2ff" stroke="none"/>
+    <path d="M410 70 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3 Z" fill="#ffffff" opacity=".9"/>
+    <path d="M86 300 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2 Z" fill="#ffffff" opacity=".7"/>
+    <!-- aurora ribbons -->
+    <path d="M-20 210 C90 120 210 160 300 90 S470 30 540 70" fill="none" stroke="url(#aur1)" stroke-width="46" stroke-linecap="round" opacity=".7" filter="url(#soft)"/>
+    <path d="M-20 260 C110 190 230 220 330 150 S480 110 540 140" fill="none" stroke="url(#aur2)" stroke-width="30" stroke-linecap="round" opacity=".55" filter="url(#soft)"/>
+    <!-- snowy peaks -->
+    <path d="M-10 512 L-10 420 L80 350 L130 392 L210 318 L280 384 L340 336 L430 404 L522 360 L522 512 Z" fill="url(#mtn)" opacity=".95"/>
+    <path d="M80 350 L104 370 L92 372 L80 362 L68 370 Z M210 318 L240 346 L222 344 L210 334 L196 346 Z M340 336 L366 358 L352 356 L340 348 L328 356 Z" fill="#ffffff"/>
+    <path d="M-10 470 C120 440 260 470 522 440 L522 512 L-10 512 Z" fill="#0b1628" opacity=".55"/>
   </g>
-  <!-- lens ring + handle -->
-  <circle cx="222" cy="214" r="128" fill="none" stroke="url(#ring)" stroke-width="22"/>
-  <circle cx="222" cy="214" r="112" fill="none" stroke="#7ef0c4" stroke-opacity=".25" stroke-width="3"/>
-  <line x1="318" y1="310" x2="410" y2="402" stroke="#7ef0c4" stroke-width="40" stroke-linecap="round"/>
-  <line x1="318" y1="310" x2="410" y2="402" stroke="#0b1628" stroke-opacity=".25" stroke-width="10" stroke-linecap="round"/>
-  <!-- trend tick: rising line on the handle side -->
-  <polyline points="96,430 150,412 196,420 248,392 296,384" fill="none" stroke="#b39dff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
-  <circle cx="296" cy="384" r="9" fill="#b39dff"/>
+
+  <!-- crystal -->
+  <circle cx="256" cy="232" r="190" fill="url(#glow)"/>
+  <g transform="translate(256 232) scale(0.98)">
+    <use href="#arm"/>
+    <use href="#arm" transform="rotate(60)"/>
+    <use href="#arm" transform="rotate(120)"/>
+    <use href="#arm" transform="rotate(180)"/>
+    <use href="#arm" transform="rotate(240)"/>
+    <use href="#arm" transform="rotate(300)"/>
+    <!-- hexagonal core -->
+    <path d="M0 -36 L31 -18 L31 18 L0 36 L-31 18 L-31 -18 Z" fill="url(#crys)" stroke="#ffffff" stroke-width="3"/>
+    <path d="M0 -36 L31 -18 L0 0 Z" fill="#ffffff" opacity=".85"/>
+    <path d="M0 0 L31 18 L0 36 Z" fill="#7b5cff" opacity=".35"/>
+    <!-- heavy-snow drops on the lower arms -->
+    <g fill="#a98bff" stroke="#ffffff" stroke-width="2">
+      <path d="M0 196 C-10 210 -12 218 -12 223 A12 12 0 0 0 12 223 C12 218 10 210 0 196 Z"/>
+    </g>
+  </g>
+
+  <!-- rim -->
+  <circle cx="256" cy="256" r="244" fill="none" stroke="#7ef0c4" stroke-width="6" stroke-opacity=".9"/>
+  <circle cx="256" cy="256" r="236" fill="none" stroke="#b39dff" stroke-width="2" stroke-opacity=".6"/>
 </svg>
